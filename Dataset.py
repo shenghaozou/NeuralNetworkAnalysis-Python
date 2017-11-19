@@ -1,36 +1,15 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from System.IO import *
+﻿import DenseMatrix
+import DenseVector
+import File
+import abc
 
 class Accessor(object):
+	def __init__(self):
+		__metaclass__ = abc.ABCMeta
+
+	@abc.abstractmethod
 	def Get(self):
-		pass
+		raise NotImplementedError("Please use a concrete Accessor object")
 
 class MemAccessor(Accessor):
 	def __init__(self, data):
@@ -67,7 +46,7 @@ class DSList(object):
 		return self._elems_[index]
 
 	def Count(self):
-		return self._elems_.Count()
+		return len(self._elems_)
 
 	def Add(self, datum):
 		self._elems_.Add(datum)
@@ -76,7 +55,7 @@ class DSList(object):
 		self._elems_[index] = datum
 
 	def CreatePermutation(self, permutation):
-		ret = DSList[T]()
+		ret = DSList()
 		i = 0
 		while i < self.Count():
 			ret.elems_.Add(self._elems_[permutation[i]])
@@ -84,11 +63,11 @@ class DSList(object):
 		return ret
 
 	def CreateSplit(self, counts):
-		result = List[DSList]()
+		result = []
 		start = 0
 		i = 0
 		while i < counts.Length:
-			data = DSList[T]()
+			data = DSList()
 			j = 0
 			while j < counts[i]:
 				data.Add(self.GetAccessor(start + j))
@@ -135,28 +114,8 @@ class Dataset(object):
 		return False
 
 	def __init__(self, labelcount):
-		self._data_ = DSList[Array[Double]]()
-		self._labels_ = DSList[int]()
-		self._labelCount_ = labelcount
-
-	def __init__(self, labelcount):
-		self._data_ = DSList[Array[Double]]()
-		self._labels_ = DSList[int]()
-		self._labelCount_ = labelcount
-
-	def __init__(self, labelcount):
-		self._data_ = DSList[Array[Double]]()
-		self._labels_ = DSList[int]()
-		self._labelCount_ = labelcount
-
-	def __init__(self, labelcount):
-		self._data_ = DSList[Array[Double]]()
-		self._labels_ = DSList[int]()
-		self._labelCount_ = labelcount
-
-	def __init__(self, labelcount):
-		self._data_ = DSList[Array[Double]]()
-		self._labels_ = DSList[int]()
+		self._data_ = DSList()
+		self._labels_ = DSList()
 		self._labelCount_ = labelcount
 
 	def LabelCount(self):
@@ -171,12 +130,12 @@ class Dataset(object):
 	def get_Data(self):
 		return self._data_
 
-	Data = property(fget=get_Data)
+	Data = property(fget = get_Data)
 
 	def get_Labels(self):
 		return self._labels_
 
-	Labels = property(fget=get_Labels)
+	Labels = property(fget = get_Labels)
 
 	def GetDatum(self, i):
 		return self._data_.Get(i)
@@ -257,10 +216,7 @@ class ImageDataset(object):
 	 </summary>
 	"""
 	def __init__(self, dataset, metadata):
-
-	def __init__(self, dataset, metadata):
-
-	def __init__(self, dataset, metadata):
+		pass
 
 	def get_Dataset(self):
 		return self._dataset_
@@ -268,30 +224,30 @@ class ImageDataset(object):
 	def set_Dataset(self, value):
 		self._dataset_ = value
 
-	Dataset = property(fget=get_Dataset, fset=set_Dataset)
+	Dataset = property(fget = get_Dataset, fset=set_Dataset)
 
 	def get_ChannelCount(self):
 		return self._channelCount_
 
-	ChannelCount = property(fget=get_ChannelCount)
+	ChannelCount = property(fget = get_ChannelCount)
 
 	def get_RowCount(self):
 		return self._rowCount_
 
-	RowCount = property(fget=get_RowCount)
+	RowCount = property(fget = get_RowCount)
 
 	def get_ColumnCount(self):
 		return self._columnCount_
 
-	ColumnCount = property(fget=get_ColumnCount)
+	ColumnCount = property(fget = get_ColumnCount)
 
 	def get_IsColor(self):
 		return self._isColor_
 
-	IsColor = property(fget=get_IsColor)
+	IsColor = property(fget = get_IsColor)
 
 	def get_Metadata(self):
-		return Tuple[int, int, int, Boolean](self._channelCount_, self._rowCount_, self._columnCount_, self._isColor_)
+		return (self._channelCount_, self._rowCount_, self._columnCount_, self._isColor_)
 
 	Metadata = property(fget=get_Metadata)
 
@@ -299,7 +255,7 @@ class ImageDataset(object):
 		split = self.Dataset.CreateSplit(count)
 		id1 = ImageDataset(split.Item1, self.Metadata)
 		id2 = ImageDataset(split.Item2, self.Metadata)
-		return Tuple[ImageDataset, ImageDataset](id1, id2)
+		return (id1, id2)
 
 	def ShuffleSplitMany(self, counts):
 		buckets = Math.Ceiling(self.Dataset.Count() / counts)
@@ -387,7 +343,7 @@ class Data(object):
 		while i < imagesets.Count():
 			dlist[i] = imagesets[i].Dataset
 			i += 1
-		dataset = Dataset(DSList[Array[Double]](), DSList[int](), imagesets[0].Dataset.LabelCount())
+		dataset = Dataset(DSList(), DSList[int](), imagesets[0].Dataset.LabelCount())
 		dataset.UnionMany(dlist)
 		return ImageDataset(dataset, metadata)
 

@@ -1,55 +1,37 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from MathNet.Numerics import *
+﻿import abc
+import DenseMatrix
+import DenseVector
 
 class ITransform(object):
+	def __init__(self):
+		__metaclass__ = abc.ABCMeta
+	@abc.abstractmethod
 	def TransformedCoordinates(self):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
+	@abc.abstractmethod
 	def OriginalCoordinates(self):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
+	@abc.abstractmethod
 	def TransformedDimension(self):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
+	@abc.abstractmethod
 	def OriginalDimension(self):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
+	@abc.abstractmethod
 	def Transform(self, input):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
+	@abc.abstractmethod
 	def UnTransform(self, original, image):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
+	@abc.abstractmethod
 	def Transform(self, input):
-		pass
+		raise NotImplementedError("Please use a concrete ITransform object")
 
 class CropTransform(ITransform):
 	def __init__(self, inputCoordinates, inputDimension, cropSize, fromCenter):
@@ -59,7 +41,7 @@ class CropTransform(ITransform):
 		self._inputCoordinates_ = inputCoordinates
 		self._outputDimension_ = cropSize * cropSize * inputCoordinates.ChannelCount
 		self._outputCoordinates_ = ImageCoordinates(inputCoordinates.ChannelCount, cropSize, cropSize)
-
+		
 	def OriginalCoordinates(self):
 		return self._inputCoordinates_
 
@@ -73,15 +55,6 @@ class CropTransform(ITransform):
 		return self._outputDimension_
 
 	def UnTransform(self, orig, image):
-		""" <summary>
-		 Given an original image and a transformed one, we get back one that
-		 has the same dimensions the original and if we transform it we get back image, i.e:
-		 <code> UnTransform(orig, Transform(orig)) = orig </code>
-		 </summary>
-		 <param name="orig">The original image.</param>
-		 <param name="image">The transformed image.</param>
-		 <returns>An image satisfying the above equation.</returns>
-		"""
 		ret = DenseVector.Create(orig.Count(), 0.0)
 		orig.CopyTo(ret)
 		# Now ret is a copy of orig, so simply overwrite the relevant pixels

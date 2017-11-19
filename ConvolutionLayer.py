@@ -1,39 +1,8 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from System.Threading import *
-from System.Diagnostics import *
-
+﻿import DenseMatrix
+import DenseVector
 class ConvolutionLayer(Layer):
 	# let V = channels * kernelrows * kernelcolumns # kernelCount * V
-	# Scratchpad stuff # #kernels x kernelpositions copies of the intercept vector. # kernelmatrix.columncount x kernelpositions # kernelmatrix.rowCount * kernelpositions
+	# Scratchpad stuff # #kernels x kernelpositions copies of the intercept vector. # kernelmatrix.ColumnCount x kernelpositions # kernelmatrix.RowCount * kernelpositions
 	def InputToScratch(self, input):
 		# Must populate _input_scratch :: kernelMatrix.ColumnCount x kernel-positions
 		jBound = Utils.UImageCoordinate.ComputeOutputCounts(KernelDimension, InputCoordinates.RowCount, 1, Padding, False)
@@ -56,10 +25,10 @@ class ConvolutionLayer(Layer):
 								self.__input_scratch.Value[output_x][output_y] = 0
 								continue
 							index = InputCoordinates.GetIndex(c, x, y)
-							if index < 0 or index >= input.Count:
+							if index < 0 or index >= input_.Count:
 								self.__input_scratch.Value[output_x][output_y] = 0
 								continue
-							self.__input_scratch.Value[output_x][output_y] = input[index]
+							self.__input_scratch.Value[output_x][output_y] = input_[index]
 							j += 1
 						i += 1
 					c += 1
@@ -69,14 +38,10 @@ class ConvolutionLayer(Layer):
 	def OutputScratchToRes(self, output_scratch):
 		return DenseVector.OfArray(output_scratch.ToRowWiseArray())
 
-	def DoConvolution(self, input):
-		self.InputToScratch(input)
+	def DoConvolution(self, input_):
+		self.InputToScratch(input_)
 		self._kernelMatrix_.Multiply(self.__input_scratch.Value, self.__output_scratch.Value)
 		self.__output_scratch.Value.Add(self.__intercept_scratch, self.__output_scratch.Value)
-		# 
-		# var res = kernelMatrix_ * _input_scratch + _intercept_scratch;
-		# return OutputScratchToRes(res);
-		# 
 		return self.OutputScratchToRes(self.__output_scratch.Value)
 
 	def CheckInitThreadLocalScratch(self, kernelpositions):
@@ -157,10 +122,10 @@ class ConvolutionLayer(Layer):
 
 	KernelCoordinates = property(fget=get_KernelCoordinates)
 
-	def Instrument(self, instr, input, output):
+	def Instrument(self, instr, input_, output):
 		instr[Index] = Instrumentation.NoInstrumentation()
 
-	def ApplyKernel(self, output, input, padding, kernel, row, column):
+	def ApplyKernel(self, output, input_, padding, kernel, row, column):
 		i = 0
 		while i < InputCoordinates.ChannelCount:
 			j = 0
@@ -172,34 +137,32 @@ class ConvolutionLayer(Layer):
 					if x < 0 or y < 0 or x >= InputCoordinates.RowCount or y >= InputCoordinates.ColumnCount:
 						continue
 					index = InputCoordinates.GetIndex(i, x, y)
-					if index >= 0 and index < input.Count:
-						.AddMul(, input[index], self.Kernels[kernel][self.KernelCoordinates.GetIndex(i, j, k)])
+					if index >= 0 and index < input_.Count:
+						.AddMul(, input_[index], self.Kernels[kernel][self.KernelCoordinates.GetIndex(i, j, k)])
 					k += 1
 				j += 1
 			i += 1
 		.Add(, self.Intercepts[kernel])
 		return 
 
-	def Evaluate(self, input):
+	def Evaluate(self, input_):
 		output = .CreateVector(OutputDimension) # Has initialized all values to 0.0
-		self.Evaluate(input, output)
+		self.Evaluate(input_, output)
 		return output
 
-	def Evaluate(self, input, output):
+	def Evaluate(self, input_, output):
 		jBound = Utils.UImageCoordinate.ComputeOutputCounts(self.KernelDimension, InputCoordinates.RowCount, 1, self.Padding, False)
 		kBound = Utils.UImageCoordinate.ComputeOutputCounts(self.KernelDimension, InputCoordinates.ColumnCount, 1, self.Padding, False)
 		Parallel.For(0, self.KernelCount, ParallelOptions(MaxDegreeOfParallelism = Environment.ProcessorCount), )
 
-	def EvaluateConcrete(self, input):
-		x = self.DoConvolution(input)
+	def EvaluateConcrete(self, input_):
+		x = self.DoConvolution(input_)
 		return x
 
-	# Old code, slightly slower:
-	# return Evaluate<NumInstDouble,double,Vector<double>>(input);
-	def EvaluateSymbolic(self, state, input):
+	def EvaluateSymbolic(self, state, input_):
 		if not self._symbolic_output_storage.IsValueCreated:
 			self._symbolic_output_storage.Value = .CreateVector(OutputDimension)
-		self.Evaluate(input, self._symbolic_output_storage.Value)
+		self.Evaluate(input_, self._symbolic_output_storage.Value)
 		return self._symbolic_output_storage.Value
 
 	def IsAffine(self):
