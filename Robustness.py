@@ -1,37 +1,4 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Collections import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from MathNet.Numerics import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from System.Diagnostics import *
-
+﻿
 class RobustnessOptions(object):
 	def __init__(self):
 		# Filename to register the counterexample and information about it
@@ -88,25 +55,25 @@ class RobustnessOptions(object):
 		self._ReLULogFile = ""
 
 	def Dump():
-		Console.WriteLine("Robustness options:")
-		Console.WriteLine("Registry:                    {0}", self._Registry)
-		Console.WriteLine("DatasetPercentage:           {0}", self._DataSetPercentage)
-		Console.WriteLine("CEGAR:                       {0}", self._CEGAR)
-		Console.WriteLine("DoOptimization:              {0}", self._DoOptimization)
-		Console.WriteLine("Epsilon (bound):             {0}", self._Epsilon)
-		Console.WriteLine("LabelConfidenceDiff:         {0}", self._LabelConfidenceDiff)
-		Console.WriteLine("LPTimeMilliSeconds:          {0}", self._LPTimeMilliSeconds)
-		Console.WriteLine("IgnoreLowConfidence:         {0}", self._IgnoreLowConfidence)
-		Console.WriteLine("LowConfidenceThreshold:      {0}", self._LowConfidenceThreshold)
-		Console.WriteLine("CEGARGiveUpIterations:       {0}", self._CEGARGiveUpIterations)
-		Console.WriteLine("LiveConstraintSamplingRatio: {0}", self._LiveConstraintSamplingRatio)
-		Console.WriteLine("QuantizationSafety:          {0}", self._QuantizationSafety)
-		Console.WriteLine("Integrality:                 {0}", self._Integrality)
-		Console.WriteLine("MinValue:                    {0}", self._MinValue)
-		Console.WriteLine("MaxValue:                    {0}", self._MaxValue)
-		Console.WriteLine("ScalePreProcessed:           {0}", self._ScalePreProcessed)
-		Console.WriteLine("OffsetPreProcessed:          {0}", self._OffsetPreProcessed)
-		Console.WriteLine("SavePNGCounterexamples:      {0}", self._SavePNGCounterexamples)
+		print "Robustness options:"
+		print "Registry:                    {0}", self._Registry
+		print "DatasetPercentage:           {0}", self._DataSetPercentage
+		print "CEGAR:                       {0}", self._CEGAR
+		print "DoOptimization:              {0}", self._DoOptimization
+		print "Epsilon (bound):             {0}", self._Epsilon
+		print "LabelConfidenceDiff:         {0}", self._LabelConfidenceDiff
+		print "LPTimeMilliSeconds:          {0}", self._LPTimeMilliSeconds
+		print "IgnoreLowConfidence:         {0}", self._IgnoreLowConfidence
+		print "LowConfidenceThreshold:      {0}", self._LowConfidenceThreshold
+		print "CEGARGiveUpIterations:       {0}", self._CEGARGiveUpIterations
+		print "LiveConstraintSamplingRatio: {0}", self._LiveConstraintSamplingRatio
+		print "QuantizationSafety:          {0}", self._QuantizationSafety
+		print "Integrality:                 {0}", self._Integrality
+		print "MinValue:                    {0}", self._MinValue
+		print "MaxValue:                    {0}", self._MaxValue
+		print "ScalePreProcessed:           {0}", self._ScalePreProcessed
+		print "OffsetPreProcessed:          {0}", self._OffsetPreProcessed
+		print "SavePNGCounterexamples:      {0}", self._SavePNGCounterexamples
 
 	Dump = staticmethod(Dump)
 
@@ -150,20 +117,20 @@ class Robustness(object):
 		LPSTerm.ResetVariableFactory(inputDimension + 1)
 		all = LPSTerm.FreshVariables(inputDimension + 1)
 		epsilon = all[inputDimension]
-		inputs = Array.CreateInstance(LPSTerm, inputDimension)
+		inputs = [None] * inputDimension
 		Array.Copy(all, inputs, inputDimension)
 		return Tuple[Array[LPSTerm], LPSTerm](inputs, epsilon)
 
 	GenSymbolicInputs = staticmethod(GenSymbolicInputs)
 
 	def SynthesizeCounterexamplesAndStore(nn, ds, snapshot):
-		data = List[Array[Double]]()
-		labs = List[int]()
+		data = []
+		labs = [None] * 
 		results = Robustness.SynthesizeCounterexamples(nn, ds, snapshot)
 		i = 0
 		while i < results.Count():
-			data.Add(results[i].datum)
-			labs.Add(results[i].actualLabel)
+			data.append(results[i].datum)
+			labs.append(results[i].actualLabel)
 			i += 1
 		newdata = Dataset(data, labs, ds.Dataset.LabelCount())
 		return ImageDataset(newdata, ds.ChannelCount, ds.RowCount, ds.ColumnCount, ds.IsColor)
@@ -181,7 +148,7 @@ class Robustness(object):
 		 <returns></returns>
 		"""
 		# Initialization stuff
-		counterexamples = List[LabelWithConfidence]()
+		counterexamples = [None] * 
 		reg = SynthRegistry(RobustnessOptions.Registry + ".csv", RobustnessOptions.Registry)
 		# How many training points to do
 		trainingPointsToDo = Math.Round(ds.Dataset.Count() * RobustnessOptions.DataSetPercentage)
@@ -193,7 +160,7 @@ class Robustness(object):
 		i = 0
 		while i < ds.Dataset.Count():
 			if completed < trainingPointsToDo:
-				Console.WriteLine("Image count = {0}", i)
+				print "Image count = {0}", i
 				instr = NNInstrumentation()
 				imageLab = ULabel.LabelWithConfidence(nn, instr, ds.Dataset.GetDatum(i), True)
 				synthLab = None
@@ -202,7 +169,7 @@ class Robustness(object):
 					stopwatch.Start()
 					synthLab = Robustness.SynthesizeCounterexample(nn, inputs.Item1, inputs.Item2, imageLab, instr, ds.Dataset.GetLabel(i), ds.RowCount, ds.ColumnCount, ds.IsColor)
 					stopwatch.Stop()
-					Console.WriteLine("Processed image in {0} milliseconds", stopwatch.ElapsedMilliseconds)
+					print "Processed image in {0} milliseconds", stopwatch.ElapsedMilliseconds
 					GC.Collect()
 				except , :
 					continue
@@ -235,10 +202,10 @@ class Robustness(object):
 		orig_image = imageLab.datum
 		orig_image_crop = nn.CropMaybe(DenseVector.OfArray(orig_image)).ToArray()
 		if realLabel != origLabel:
-			Console.WriteLine("This image is misclassifed already! Skipping.")
+			print "This image is misclassifed already! Skipping."
 			return None
 		if RobustnessOptions.IgnoreLowConfidence and imageLab.softMaxValue < RobustnessOptions.LowConfidenceThreshold:
-			Console.WriteLine("This image is misclassifed with low confidence! Skipping.")
+			print "This image is misclassifed with low confidence! Skipping."
 			return None
 		# Fast path:
 		# DiffInfo diff_info;
@@ -247,13 +214,13 @@ class Robustness(object):
 		# * *********************
 		# if (diffDict.TryGetValue(new Tuple<int,int>(origLabel,targetLabel),out diff_info))
 		# {
-		# Console.WriteLine("Got a hit in the difference cache!");
+		# print "Got a hit in the difference cache!";
 		# Vector<double> diff_counterexample = diff_info.diff;
 		# 
 		# Vector<double> cand = DenseVector.OfArray(orig_image) + diff_counterexample;
 		# 
 		# 
-		# Console.WriteLine("oooooooooooooooo Checking with the fast path!");
+		# print "oooooooooooooooo Checking with the fast path!";
 		# 
 		# double[] cand_arr_crop = nn.CropMaybe(cand).ToArray();
 		# 
@@ -267,12 +234,12 @@ class Robustness(object):
 		# if (candLab.actualLabel != origLabel)
 		# {
 		# 
-		# Console.WriteLine("=> Real counterexample (from fast path)!");
+		# print "=> Real counterexample (from fast path)!";
 		# diff_info.number++;
 		# return candLab;
 		# }
 		# 
-		# Console.WriteLine("xxxx Fast path failed, continuing with symbolic interpreter ...");
+		# print "xxxx Fast path failed, continuing with symbolic interpreter ...";
 		# // otherwise continue with the slow path ...
 		# }
 		# **********************
@@ -307,24 +274,24 @@ class Robustness(object):
 			currentCts.And(deferredCts)
 			deferredCts = LPSConstraints()
 		# CEGAR loop header
-		Console.WriteLine("Current constraints: {0}, deferred: {1}", currentCts.Count, deferredCts.Count)
+		print "Current constraints: {0}, deferred: {1}", currentCts.Count, deferredCts.Count
 		lps = LPSolver(input_dimension_post_crop, currentCts.Count + deferredCts.Count, orig_image_crop, RobustnessOptions.Epsilon)
 		lps.AddConstraints(currentCts, objective)
 		cegar_iterations = 0
 		while True:
 			if cegar_iterations += 1 > RobustnessOptions.CEGARGiveUpIterations:
-				Console.WriteLine("xxxxxxxxxxxxxxxx Giving up CEGAR, could not find model!")
+				print "xxxxxxxxxxxxxxxx Giving up CEGAR, could not find model!"
 			newImage = lps.SolveLowLevelLP()
 			currentCts = LPSConstraints()
 			if newImage == None:
-				Console.WriteLine("xxxxxxxxxxxxxxxx No model!")
-			Console.WriteLine("oooooooooooooooo Found model!")
+				print "xxxxxxxxxxxxxxxx No model!"
+			print "oooooooooooooooo Found model!"
 			newImageUnrounded = Array.CreateInstance(Double, newImage.Length)
 			Array.Copy(newImage, newImageUnrounded, newImage.Length)
 			if RobustnessOptions.QuantizationSafety:
 				Utils.UArray.InPlaceRoundDoubleArray(newImage)
 			samcount = Utils.UArray.ComputeRoundIdenticals(orig_image_crop, newImage)
-			Console.WriteLine("Synthesized image has {0} identical inputs (after rounding) to original (cropped)", samcount)
+			print "Synthesized image has {0} identical inputs (after rounding) to original (cropped)", samcount
 			# Now, try to label the new example
 			newLab = Utils.ULabel.LabelWithConfidence(nn, newImage, False) # Already  cropped, don't crop!
 			if newLab.actualLabel != targetLabel:
@@ -334,7 +301,7 @@ class Robustness(object):
 					# underapproximation. But the only thing we can try and do here is
 					# add mor constraints and try to resolve. 
 					if RobustnessOptions.CEGAR:
-						Console.WriteLine("Not really a counterexample, going round CEGAR loop.")
+						print "Not really a counterexample, going round CEGAR loop."
 					added = 0
 					# new_image_plus_eps = newImage : 0.0 
 					# so that the length matches the coefficients of each constraint ... 
@@ -342,21 +309,21 @@ class Robustness(object):
 					Array.Copy(newImageUnrounded, newimage_plus_eps, newImage.Length)
 					newimage_plus_eps[newImage.Length] = 0.0
 					newImageVec_eps = DenseVector.OfArray(newimage_plus_eps)
-					denumerator = deferredCts.GetEnumerator()
+					dfor e in deferredCts:
 					Parallel.For(0, deferredCts.Count, )
 					# currentCts.And(curr_deferred.Term, curr_deferred.Inequality);
-					Console.WriteLine()
-					Console.WriteLine("Added {0} constraints for CEGAR", added)
+					print 
+					print "Added {0} constraints for CEGAR", added
 					if added == 0:
-						Console.WriteLine("=> CEGAR cannot improve things.")
+						print "=> CEGAR cannot improve things."
 					# return null;
 					# lps.AddConstraints(currentCts, null);
 					continue
 				else:
-					Console.WriteLine("=> Real counterexample! (Although with different label than expected)")
+					print "=> Real counterexample! (Although with different label than expected)"
 					break
 			else:
-				Console.WriteLine("=> Real counterexample! (New image has second-best label")
+				print "=> Real counterexample! (New image has second-best label"
 				break
 		if RobustnessOptions.DisplaySynthesizedImagesAndPause:
 			Utils.UDraw.DisplayImageAndPause(Utils.UArray.ToIntArray(imageLab.datum), rowSize, colSize, isColor)
@@ -372,7 +339,7 @@ class Robustness(object):
 			dinfo = DiffInfo()
 			dinfo.diff = diff_val
 			dinfo.number = 1
-			self._diffDict.Add(Tuple[int, int](origLabel, newLab.actualLabel), dinfo)
+			self._diffDict.append(Tuple[int, int](origLabel, newLab.actualLabel), dinfo)
 		return newLab
 
 	SynthesizeCounterexample = staticmethod(SynthesizeCounterexample)
@@ -388,16 +355,16 @@ class Robustness(object):
 		matrix = LPSTerm.UnderlyingMatrix(output)
 		zeros = DenseVector.Create(output.Length, 0.0)
 		# int sparse_count = 0;
-		stats = List[Tuple]()
+		stats = [None] * 
 		i = 0
 		while i < matrix.ColumnCount:
 			col = matrix.Column(i)
-			stats.Add(Tuple[int, Double](i, col.Maximum()))
+			stats.append(Tuple[int, Double](i, col.Maximum()))
 			i += 1
 		stats.Sort()
-		enumerator = stats.GetEnumerator()
+		for e in stats:
 		while enumerator.MoveNext():
 			s = enumerator.Current
-			Console.WriteLine(s.Item2)
+			print s.Item2
 
 	ReportSparsity = staticmethod(ReportSparsity)

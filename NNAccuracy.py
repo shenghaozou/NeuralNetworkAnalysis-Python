@@ -38,8 +38,8 @@ class NNAccuracy(object):
 			datum = ds.GetDatum(i)
 			ground_label = ds.GetLabel(i)
 			if NNAccuracy.predicate(nn, datum, ground_label):
-				ret.Data.Add(MemAccessor[Array[Double]](datum))
-				ret.Labels.Add(MemAccessor[int](ground_label))
+				ret.Data.append(MemAccessor[Array[Double]](datum))
+				ret.Labels.append(MemAccessor[int](ground_label))
 			i += 1
 		return ret
 
@@ -67,18 +67,18 @@ class NNAccuracy(object):
 			labconf = Utils.ULabel.LabelWithConfidence(nn, ds.GetDatum(i), True)
 			label = labconf.actualLabel
 			# int label = Utils.ULabel.Label(nn, ds.GetDatum(i), true);
-			# Console.WriteLine("Confidence = {0}", labconf.softMaxValue);
+			# print "Confidence = {0}", labconf.softMaxValue;
 			if label == ground_label:
 			else:
-			# Console.WriteLine("Missclassifciation: " + label + " vs " + testImages.Dataset.GetLabel(i));
+			# print "Missclassifciation: " + label + " vs " + testImages.Dataset.GetLabel(i);
 			i += 1
 		# Utils.UDraw.DisplayImageAndPause(Utils.UArray.ToRGBArray(datum, 1.0, 0.0), 32, 32, true);
-		Console.WriteLine("\nCorrectly classified = {0}", cnt)
-		Console.WriteLine("Total images         = {0}", ds.Count())
+		print "\nCorrectly classified = {0}", cnt
+		print "Total images         = {0}", ds.Count()
 		acc = cnt / ds.Count()
 		Console.Write("\nAccuracy: ")
-		Console.WriteLine(acc)
-		Console.WriteLine("ReLU Collisions = {0}", Instrumentation.Collisions)
+		print acc
+		print "ReLU Collisions = {0}", Instrumentation.Collisions
 		return acc
 
 	GetAccuracy = staticmethod(GetAccuracy)
@@ -90,7 +90,7 @@ class NNAccuracy(object):
 		#                for (int i =0; i < ds.Count(); i++)
 		# safety for infinity ... 
 		Console.Write("\nTotal loss: ")
-		Console.WriteLine(loss)
+		print loss
 		return loss
 
 	GetLoss = staticmethod(GetLoss)

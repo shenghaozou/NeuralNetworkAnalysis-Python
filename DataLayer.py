@@ -7,7 +7,7 @@ class ITransform(object):
 		__metaclass__ = abc.ABCMeta
 	@abc.abstractmethod
 	def TransformedCoordinates(self):
-		raise NotImplementedError("Please use a concrete ITransform object")
+		 pass
 
 	@abc.abstractmethod
 	def OriginalCoordinates(self):
@@ -22,7 +22,7 @@ class ITransform(object):
 		raise NotImplementedError("Please use a concrete ITransform object")
 
 	@abc.abstractmethod
-	def Transform(self, input):
+	def Transform(self, input_):
 		raise NotImplementedError("Please use a concrete ITransform object")
 
 	@abc.abstractmethod
@@ -30,7 +30,7 @@ class ITransform(object):
 		raise NotImplementedError("Please use a concrete ITransform object")
 
 	@abc.abstractmethod
-	def Transform(self, input):
+	def Transform(self, input_):
 		raise NotImplementedError("Please use a concrete ITransform object")
 
 class CropTransform(ITransform):
@@ -77,7 +77,8 @@ class CropTransform(ITransform):
 			channel += 1
 		return ret
 
-	def TransformGeneric(self, input):
+	def TransformGeneric(self, input_):
+		raise NotImplementedError("What's the meaning of default(xxx) in C sharp?")
 		if not self._fromCenter_:
 			raise NotImplementedException("Non-center image cropping not supported yet!")
 		center_row = self._inputCoordinates_.RowCount / 2
@@ -94,22 +95,22 @@ class CropTransform(ITransform):
 					input_idx = self._inputCoordinates_.GetIndex(channel, topleft_row + i, topleft_col + j)
 					output_idx = self._outputCoordinates_.GetIndex(channel, i, j)
 					if input_idx >= 0 and input_idx < self._inputDimension_ and output_idx >= 0 and output_idx < self._outputDimension_:
-						z = .Const(0.0)
-						.Add(, input[input_idx])
+						z = 0.0
+						z += input_[input_idx]
 						output[output_idx] = z
 					j += 1
 				i += 1
 			channel += 1
 		return output
 
-	def Transform(self, input):
-		#             Utils.UDraw.DisplayImageAndPause(Utils.UArray.ToRGBArray(input.ToArray(), 128, 127), 32, 32, true);
-		output = self.TransformGeneric(input)
+	def Transform(self, input_):
+		#             Utils.UDraw.DisplayImageAndPause(Utils.UArray.ToRGBArray(input_.ToArray(), 128, 127), 32, 32, true);
+		output = self.TransformGeneric(input_)
 		#            Utils.UDraw.DisplayImageAndPause(Utils.UArray.ToRGBArray(output.ToArray(), 128, 127), 30, 30, true);
 		return output
 
-	def Transform(self, input):
-		return self.TransformGeneric(input)
+	def Transform(self, input_):
+		return self.TransformGeneric(input_)
 
 class DataLayer(Layer):
 	# Scaling
@@ -125,7 +126,7 @@ class DataLayer(Layer):
 		self._meanImage_ = meanImage
 		if meanChannel != None and meanChannel.Count > 0:
 			channel_count = inputCoordinates.ChannelCount
-			self._meanChannel_ = Array.CreateInstance(Double, channel_count)
+			self._meanChannel_ = [None] * channel_count
 			i = 0
 			while i < channel_count:
 				self._meanChannel_[i] = meanChannel[i % meanChannel.Count()]
@@ -140,26 +141,27 @@ class DataLayer(Layer):
 		self._meanImage_ = meanImage
 		if meanChannel != None and meanChannel.Count > 0:
 			channel_count = inputCoordinates.ChannelCount
-			self._meanChannel_ = Array.CreateInstance(Double, channel_count)
+			self._meanChannel_ = [None] * channel_count # [None] * channel_count
 			i = 0
 			while i < channel_count:
 				self._meanChannel_[i] = meanChannel[i % meanChannel.Count()]
 				i += 1
 		self.InitLayer(index, LayerType.DATA_LAYER, inputDimension, inputDimension, inputCoordinates, inputCoordinates)
 
-	def Instrument(self, instr, input, output):
+	def Instrument(self, instr, input_, output):
+		raise NotImplementedError("Instrumentation?")
 		instr[Index] = Instrumentation.NoInstrumentation()
 
 	def IsAffine(self):
 		return False
  # Oh well just just don't coalesce across data layer although technically it's entirely possible
-	def EvaluateConcrete(self, input):
+	def EvaluateConcrete(self, input_):
 		# If we have a meanImage ...
 		if self._meanImage_ != None:
-			return (input - DenseVector.OfArray(self._meanImage_)) * self._scale_
+			return (input_ - DenseVector.OfArray(self._meanImage_)) * self._scale_
 		# If we have a meanChannel ... 
 		if self._meanChannel_ != None and self._meanChannel_.Count() > 0:
-			cur = input
+			cur = input_
 			channel = 0
 			while channel < InputCoordinates.ChannelCount:
 				r = 0
@@ -167,22 +169,23 @@ class DataLayer(Layer):
 					c = 0
 					while c < InputCoordinates.ColumnCount:
 						index = InputCoordinates.GetIndex(channel, r, c)
-						cur[index] = (input[index] - self._meanChannel_[channel]) * self._scale_
+						cur[index] = (input_[index] - self._meanChannel_[channel]) * self._scale_
 						c += 1
 					r += 1
 				channel += 1
 			return cur
 		# If we are only doing scaling ... 
-		return (input * self._scale_)
+		return (input_ * self._scale_)
 
-	def EvaluateSymbolic(self, state, input):
-		cur = .CreateVector(input.Length)
+	def EvaluateSymbolic(self, state, input_):
+		raise NotImplementedError("Don't know what is NumInst... line 285")
+		cur = .CreateVector(input_.Length)
 		# If we have a meanImage ...
 		if self._meanImage_ != None:
 			i = 0
-			while i < input.Length:
+			while i < input_.Length:
 				cur[i].Sub(LPSTerm.Const(self._meanImage_[i])) # - mean
-				cur[i].Add(input[i]) # + input
+				cur[i].append(input_[i]) # + input_
 				cur[i].Mul(self._scale_)
 				i += 1
 			return cur
@@ -196,7 +199,7 @@ class DataLayer(Layer):
 					while c < InputCoordinates.ColumnCount:
 						index = InputCoordinates.GetIndex(channel, r, c)
 						cur[index].Sub(LPSTerm.Const(self._meanChannel_[channel]))
-						cur[index].Add(input[index])
+						cur[index].append(input_[index])
 						cur[index].Mul(self._scale_)
 						c += 1
 					r += 1
@@ -204,8 +207,8 @@ class DataLayer(Layer):
 			return cur
 		# Finally, if we are only doing scaling ...
 		i = 0
-		while i < input.Length:
-			cur[i].Add(input[i])
+		while i < input_.Length:
+			cur[i].append(input_[i])
 			cur[i].Mul(self._scale_)
 			i += 1
 		return cur

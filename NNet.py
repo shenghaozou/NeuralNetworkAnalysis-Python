@@ -1,37 +1,7 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from System.Diagnostics import *
-
+﻿
 class LayerType(object):
 	def __init__(self):
+		pass
 
 class Layer(object):
 	""" <summary>
@@ -39,6 +9,7 @@ class Layer(object):
 	 </summary>
 	"""
 	def __init__(self):
+		pass
 		""" <summary>
 		  A layer of the neural network and the operations it supports
 		 </summary>
@@ -108,13 +79,13 @@ class NeuralNet(object):
 		# to expose it to the symbolic evaluator. If cropT == null, then no 
 		# cropping happens.
 		self._cropT = None
-		self._layers_ = List[Layer]()
+		self._layers_ = [None] * 
 
 	def AddCropTransform(self, crop):
 		self._cropT = crop
 
 	def AddLayer(self, layer):
-		self._layers_.Add(layer)
+		self._layers_.append(layer)
 
 	def get_Layers(self):
 		return self._layers_
@@ -149,10 +120,10 @@ class NeuralNet(object):
 		return image
 
 	def LayerTypes(self):
-		layerTypes = List[LayerType]()
+		layerTypes = [None] * 
 		i = 0
 		while i < self.LayerCount:
-			layerTypes.Add(self.Layers[i].LayerType)
+			layerTypes.append(self.Layers[i].LayerType)
 			i += 1
 		return layerTypes
 
@@ -181,29 +152,29 @@ class NeuralNet(object):
 			w = curr.EvaluateSymbolic(state, v)
 			stopwatch.Stop()
 			v = w
-			Console.WriteLine("Symbolic interpreter: layer index: {0,2}, elapsed milliseconds = {1}", curr.Index, stopwatch.ElapsedMilliseconds)
+			print "Symbolic interpreter: layer index: {0,2}, elapsed milliseconds = {1}", curr.Index, stopwatch.ElapsedMilliseconds
 			i += 1
 		return v
 
 	def CoalesceToVirtual(self):
-		newLayers = List[Layer]()
-		currAffList = List[Layer]()
+		newLayers = [None] * 
+		currAffList = [None] * 
 		i = 0
 		while i < self.LayerCount:
 			curr = self.Layers[i]
 			if curr.IsAffine():
-				currAffList.Add(curr)
+				currAffList.append(curr)
 				continue
 			# Current layer is not affine
 			# If we have anything in the affine list, we should coalesce and insert before current.
 			if currAffList.Count > 0:
 				virt = VirtualLayer(currAffList)
 				currAffList.Clear()
-				newLayers.Add(virt)
-			newLayers.Add(curr)
+				newLayers.append(virt)
+			newLayers.append(curr)
 			i += 1
 		if currAffList.Count > 0:
 			virt = VirtualLayer(currAffList)
 			currAffList.Clear()
-			newLayers.Add(virt)
+			newLayers.append(virt)
 		self._layers_ = newLayers

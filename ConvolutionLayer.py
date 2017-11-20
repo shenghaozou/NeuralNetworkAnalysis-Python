@@ -1,10 +1,12 @@
 ﻿import DenseMatrix
 import DenseVector
+import Utils
 class ConvolutionLayer(Layer):
 	# let V = channels * kernelrows * kernelcolumns # kernelCount * V
 	# Scratchpad stuff # #kernels x kernelpositions copies of the intercept vector. # kernelmatrix.ColumnCount x kernelpositions # kernelmatrix.RowCount * kernelpositions
 	def InputToScratch(self, input):
 		# Must populate _input_scratch :: kernelMatrix.ColumnCount x kernel-positions
+		raise NotImplementedError("Where is the def of InputCoordinates?")
 		jBound = Utils.UImageCoordinate.ComputeOutputCounts(KernelDimension, InputCoordinates.RowCount, 1, Padding, False)
 		kBound = Utils.UImageCoordinate.ComputeOutputCounts(KernelDimension, InputCoordinates.ColumnCount, 1, Padding, False)
 		row = 0
@@ -41,10 +43,11 @@ class ConvolutionLayer(Layer):
 	def DoConvolution(self, input_):
 		self.InputToScratch(input_)
 		self._kernelMatrix_.Multiply(self.__input_scratch.Value, self.__output_scratch.Value)
-		self.__output_scratch.Value.Add(self.__intercept_scratch, self.__output_scratch.Value)
+		self.__output_scratch.Value.append(self.__intercept_scratch, self.__output_scratch.Value)
 		return self.OutputScratchToRes(self.__output_scratch.Value)
 
 	def CheckInitThreadLocalScratch(self, kernelpositions):
+		raise NotImplementedError("What should we do to deal with ThreadLocal variables?")
 		self.__input_scratch = ThreadLocal[Matrix]()
 		self.__output_scratch = ThreadLocal[Matrix]()
 		self.__output_result = ThreadLocal[Vector]()
@@ -123,6 +126,7 @@ class ConvolutionLayer(Layer):
 	KernelCoordinates = property(fget=get_KernelCoordinates)
 
 	def Instrument(self, instr, input_, output):
+		raise NotImplementedError("Instrumentation")
 		instr[Index] = Instrumentation.NoInstrumentation()
 
 	def ApplyKernel(self, output, input_, padding, kernel, row, column):
@@ -142,15 +146,17 @@ class ConvolutionLayer(Layer):
 					k += 1
 				j += 1
 			i += 1
-		.Add(, self.Intercepts[kernel])
+		.append(, self.Intercepts[kernel])
 		return 
 
 	def Evaluate(self, input_):
+		raise NotImplementedError("Don't know how to deal with this situation. What is NumT?")
 		output = .CreateVector(OutputDimension) # Has initialized all values to 0.0
 		self.Evaluate(input_, output)
 		return output
 
 	def Evaluate(self, input_, output):
+		raise NotImplementedError("Don't know how to deal with Parallelism.")
 		jBound = Utils.UImageCoordinate.ComputeOutputCounts(self.KernelDimension, InputCoordinates.RowCount, 1, self.Padding, False)
 		kBound = Utils.UImageCoordinate.ComputeOutputCounts(self.KernelDimension, InputCoordinates.ColumnCount, 1, self.Padding, False)
 		Parallel.For(0, self.KernelCount, ParallelOptions(MaxDegreeOfParallelism = Environment.ProcessorCount), )
@@ -161,7 +167,8 @@ class ConvolutionLayer(Layer):
 
 	def EvaluateSymbolic(self, state, input_):
 		if not self._symbolic_output_storage.IsValueCreated:
-			self._symbolic_output_storage.Value = .CreateVector(OutputDimension)
+			raise NotImplementedError("What is NumInstLPSTermArr?")
+			self._symbolic_output_storage.Value = NumInstLPSTermArr.CreateVector(OutputDimension)
 		self.Evaluate(input_, self._symbolic_output_storage.Value)
 		return self._symbolic_output_storage.Value
 

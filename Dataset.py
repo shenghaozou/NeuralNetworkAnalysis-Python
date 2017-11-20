@@ -2,6 +2,8 @@
 import DenseVector
 import File
 import abc
+import Utils
+import math
 
 class Accessor(object):
 	def __init__(self):
@@ -49,7 +51,7 @@ class DSList(object):
 		return len(self._elems_)
 
 	def Add(self, datum):
-		self._elems_.Add(datum)
+		self._elems_.append(datum)
 
 	def Set(self, index, datum):
 		self._elems_[index] = datum
@@ -58,7 +60,7 @@ class DSList(object):
 		ret = DSList()
 		i = 0
 		while i < self.Count():
-			ret.elems_.Add(self._elems_[permutation[i]])
+			ret.elems_.append(self._elems_[permutation[i]])
 			i += 1
 		return ret
 
@@ -70,9 +72,9 @@ class DSList(object):
 			data = DSList()
 			j = 0
 			while j < counts[i]:
-				data.Add(self.GetAccessor(start + j))
+				data.append(self.GetAccessor(start + j))
 				j += 1
-			result.Add(data)
+			result.append(data)
 			start += counts[i]
 			i += 1
 		if start != self.Count():
@@ -80,13 +82,13 @@ class DSList(object):
 		return result
 
 	def CreateSplit(self, count):
-		counts = Array.CreateInstance(int, 2)
+		counts = [None] * 2
 		counts[0] = count
 		counts[1] = self.Count() - count
 		if counts[1] < 0:
 			raise Exception("Cant split past end of dataset!")
 		splits = self.CreateSplit(counts)
-		return Tuple[DSList, DSList](splits[0], splits[1])
+		return (splits[0], splits[1])
 
 class Dataset(object):
 	""" <summary>
@@ -146,7 +148,7 @@ class Dataset(object):
 	def MeanDatum(self):
 		count = self.Count()
 		dim = self.Dimension()
-		ret = Array.CreateInstance(Double, dim)
+		ret = [None] * dim
 		i = 0
 		while i < count:
 			j = 0
@@ -167,27 +169,27 @@ class Dataset(object):
 		return d
 
 	def Update(self, points):
-		enumerator = points.GetEnumerator()
+		for e in points:
 		while enumerator.MoveNext():
 			tup = enumerator.Current
-			self._data_.Add(MemAccessor[Array[Double]](tup.Item1))
-			self._labels_.Add(MemAccessor[int](tup.Item2))
+			self._data_.append(MemAccessor[Array[Double]](tup.Item1))
+			self._labels_.append(MemAccessor[int](tup.Item2))
 
 	# Add points with the same label
 	def Update(self, points, label):
-		enumerator = points.GetEnumerator()
+		for e in points:
 		while enumerator.MoveNext():
 			dat = enumerator.Current
-			self._data_.Add(MemAccessor[Array[Double]](dat))
-			self._labels_.Add(MemAccessor[int](label))
+			self._data_.append(MemAccessor[Array[Double]](dat))
+			self._labels_.append(MemAccessor[int](label))
 
 	def CreateSplit(self, counts):
 		datasplits = self._data_.CreateSplit(counts)
 		labelsplit = self._labels_.CreateSplit(counts)
-		d = List[Dataset]()
+		d = [None] * 
 		i = 0
 		while i < datasplits.Count():
-			d.Add(Dataset(datasplits[i], labelsplit[i], self._labelCount_))
+			d.append(Dataset(datasplits[i], labelsplit[i], self._labelCount_))
 			i += 1
 		return d
 
@@ -195,19 +197,19 @@ class Dataset(object):
 		if count > self.Count():
 			raise Exception("Split point can't be after the dataset!")
 		split = self.CreateSplit(Array[int]((count, self.Count() - count)))
-		return Tuple[Dataset, Dataset](split[0], split[1])
+		return (split[0], split[1])
 
 	def Union(self, datasets):
 		self.UnionMany(datasets)
 
 	def UnionMany(self, datasets):
-		enumerator = datasets.GetEnumerator()
+		for e in datasets:
 		while enumerator.MoveNext():
 			dataset = enumerator.Current
 			i = 0
 			while i < dataset.Count():
-				self._data_.Add(dataset.data_.GetAccessor(i))
-				self._labels_.Add(dataset.labels_.GetAccessor(i))
+				self._data_.append(dataset.data_.GetAccessor(i))
+				self._labels_.append(dataset.labels_.GetAccessor(i))
 				i += 1
 
 class ImageDataset(object):
@@ -258,8 +260,8 @@ class ImageDataset(object):
 		return (id1, id2)
 
 	def ShuffleSplitMany(self, counts):
-		buckets = Math.Ceiling(self.Dataset.Count() / counts)
-		clist = Array.CreateInstance(int, buckets)
+		buckets = math.ceil(self.Dataset.Count() / counts)
+		clist = [None] * buckets
 		i = 0
 		while i < buckets:
 			clist[i] = Math.Min(counts, self.Dataset.Count() - i * counts)
@@ -268,7 +270,7 @@ class ImageDataset(object):
 		ret = List[ImageDataset](splits.Count())
 		i = 0
 		while i < splits.Count():
-			ret.Add(ImageDataset(splits[i], self.Metadata))
+			ret.append(ImageDataset(splits[i], self.Metadata))
 			i += 1
 		return ret
 
@@ -289,26 +291,26 @@ class Data(object):
 	LabelMatch = staticmethod(LabelMatch)
 
 	def CalculateDistances(dataset):
-		avgdata = Array.CreateInstance(Double, dataset.LabelCount(), dataset.LabelCount())
-		countdata = Array.CreateInstance(int, dataset.LabelCount(), dataset.LabelCount())
-		data = List[Tuple]()
+		avgdata = dataset.LabelCount() * [[None] * dataset.LabelCount()]
+		countdata = dataset.LabelCount() * [[None] * dataset.LabelCount()]
+		data = []
 		i = 0
 		while i < dataset.Count():
-			data.Add(Tuple[Array[Double], int](dataset.GetDatum(i), dataset.GetLabel(i)))
+			data.append((dataset.GetDatum(i), dataset.GetLabel(i)))
 			i += 1
 		query = data.GroupBy()
-		enumerator = query.GetEnumerator()
+		for e in query:
 		while enumerator.MoveNext():
 			grp1 = enumerator.Current
-			enumerator = query.GetEnumerator()
+			for e in query:
 			while enumerator.MoveNext():
 				grp2 = enumerator.Current
 				if grp1 == grp2:
 					continue
-				enumerator = grp1.GetEnumerator()
+				for e in grp1:
 				while enumerator.MoveNext():
 					x1 = enumerator.Current
-					enumerator = grp2.GetEnumerator()
+					for e in grp2:
 					while enumerator.MoveNext():
 						x2 = enumerator.Current
 						dist = UMath.L1Distance(x1.Item1, x2.Item1)
@@ -323,14 +325,14 @@ class Data(object):
 				avgdata[i][j] = avgdata[i][j] / countdata[i][j]
 				j += 1
 			i += 1
-		Console.WriteLine("Distance statistics:")
+		print "Distance statistics:"
 		i = 0
 		while i < dataset.LabelCount():
 			j = 0
 			while j < dataset.LabelCount():
 				if i == j:
 					continue
-				Console.WriteLine("Average distance, classes {0}-{1} = {2}", i, j, avgdata[i][j])
+				print "Average distance, classes {0}-{1} = {2}", i, j, avgdata[i][j]
 				j += 1
 			i += 1
 
@@ -343,7 +345,7 @@ class Data(object):
 		while i < imagesets.Count():
 			dlist[i] = imagesets[i].Dataset
 			i += 1
-		dataset = Dataset(DSList(), DSList[int](), imagesets[0].Dataset.LabelCount())
+		dataset = Dataset(DSList(), DS[None] * , imagesets[0].Dataset.LabelCount())
 		dataset.UnionMany(dlist)
 		return ImageDataset(dataset, metadata)
 

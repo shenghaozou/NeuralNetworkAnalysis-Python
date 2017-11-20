@@ -1,6 +1,7 @@
 ﻿from enum import Enum
 import abc
 import random
+import Utils
 from datetime import datetime
 
 class RANDTYPE(Enum):
@@ -40,8 +41,7 @@ class AugmentBrightness(IAugmentor):
 					y = 0
 					while y < self.__coords.ColumnCount:
 						idx = self.__coords.GetIndex(c, x, y)
-						#__ newdatum[idx] = Utils.UMath.Clamp(datum[idx] + eps, Utils.RobustnessOptions.MinValue, Utils.RobustnessOptions.MaxValue)
-						# FIX ME
+						newdatum[idx] = Utils.UMath.Clamp(datum[idx] + eps, Utils.RobustnessOptions.MinValue, Utils.RobustnessOptions.MaxValue)
 						y += 1
 					x += 1
 				c += 1
@@ -96,7 +96,7 @@ class AugmentContrast(IAugmentor):
 						y += 1
 					x += 1
 				c += 1
-			newdatums.Add(newdatum)
+			newdatums.append(newdatum)
 			i += 1
 		return newdatums
 
@@ -122,7 +122,7 @@ class AugmentRotation(IAugmentor):
 			real_agle = eps * self.__degrees
 			#__ newdatum_int = Utils.UDraw.Rotate(datum_int, self.__coords.RowCount, self.__coords.ColumnCount, (self.__coords.ChannelCount > 1), real_agle)
 			#__ Utils.UDraw.DisplayImageAndPause(newdatum_int, 32, 32, True)
-			#__ newdatums.Add(Utils.UArray.ToDoubleArray(newdatum_int))
+			#__ newdatums.append(Utils.UArray.ToDoubleArray(newdatum_int))
 			i += 1
 		return newdatums
 
@@ -144,7 +144,7 @@ class AugmentLossyJpeg(IAugmentor): # 0L - 100L
 			datum_int = Utils.UArray.ToIntArray(datum)
 			photoquality = self.__random.Next(self.__loss, 101)
 			#__ newdatum_int = Utils.UDraw.LossyJPGAndBack(datum_int, self.__coords.RowCount, self.__coords.ColumnCount, (self.__coords.ChannelCount > 1), photoquality)
-			#__ newdatums.Add(Utils.UArray.ToDoubleArray(newdatum_int))
+			#__ newdatums.append(Utils.UArray.ToDoubleArray(newdatum_int))
 			i += 1
 		return newdatums
 

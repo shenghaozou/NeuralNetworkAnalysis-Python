@@ -70,8 +70,8 @@ class NumInstDouble(Num):
 #public struct NumInstLPSTermVec : Num<LPSTerm,LPSTerm[]>
 #{
 #    public void AddMul(ref LPSTerm tgt, LPSTerm src, double d) { tgt.AddMul(src, d); }
-#    public void Add(ref LPSTerm tgt, LPSTerm src) { tgt.Add(src); }
-#    public void Add(ref LPSTerm tgt, double d) { tgt.Add(d);} 
+#    public void Add(ref LPSTerm tgt, LPSTerm src) { tgt.append(src); }
+#    public void Add(ref LPSTerm tgt, double d) { tgt.append(d);} 
 #    public void Mul(ref LPSTerm tgt, double d) { tgt.Mul(d); }
 #    public LPSTerm Const(double d) { return LPSTerm.Const(d);  }
 #    public LPSTerm[] CreateVector(int capacity)
@@ -86,10 +86,10 @@ class NumInstLPSTermArr(Num):
 		tgt.AddMul(src, d)
 
 	def Add(self, tgt, src):
-		tgt.Add(src)
+		tgt.append(src)
 
 	def Add(self, tgt, d):
-		tgt.Add(d)
+		tgt.append(d)
 
 	def Mul(self, tgt, d):
 		tgt.Mul(d)
@@ -98,7 +98,7 @@ class NumInstLPSTermArr(Num):
 		return LPSTerm.Const(d)
 
 	def CreateVector(self, capacity):
-		vec = Array.CreateInstance(LPSTerm, capacity)
+		vec = [None] * capacity
 		i = 0
 		while i < capacity:
 			vec[i] = LPSTerm.Const(0.0)
@@ -124,7 +124,7 @@ class LPSTerm(object):
 		#Matrix<double> coeffs = DenseMatrix.CreateIdentity(howmany);
 		#Vector<double> interc = DenseVector.Create(howmany, 0.0);
 		# return new LPSTerm[](coeffs, interc);
-		terms = Array.CreateInstance(LPSTerm, howmany)
+		terms = [None] * howmany
 		pos = 0
 		i = 0
 		while i < howmany:
@@ -145,7 +145,7 @@ class LPSTerm(object):
 			res.SetRow(i, terms[i].GetCoefficients())
 			i += 1
 		# s.Stop();
-		# Console.WriteLine("To underlying matrix: {0} milliseconds",s.ElapsedMilliseconds);
+		# print "To underlying matrix: {0} milliseconds",s.ElapsedMilliseconds;
 		return res
 
 	UnderlyingMatrix = staticmethod(UnderlyingMatrix)
@@ -191,7 +191,7 @@ class LPSTerm(object):
 	FromUnderlyingTransposeAlgebra = staticmethod(FromUnderlyingTransposeAlgebra)
 
 	def FreshVariables(howmany):
-		tmp = Array.CreateInstance(LPSTerm, howmany)
+		tmp = [None] * howmany
 		i = 0
 		while i < howmany:
 			tmp[i] = LPSTerm.FreshVariable()
@@ -285,7 +285,7 @@ class LPSTerm(object):
 
 	# this += v
 	def Add(self, v):
-		self._coefficients_.Add(v.coefficients_, self._coefficients_)
+		self._coefficients_.append(v.coefficients_, self._coefficients_)
 		self._intercept_ += v.intercept_
 
 	def Sub(self, v):
@@ -298,7 +298,7 @@ class LPSTerm(object):
 	# this += d*v
 	def AddMul(self, v, d):
 		v.coefficients_.Multiply(d, self._vcinfo_.tempmultstorage.Value)
-		self._coefficients_.Add(self._vcinfo_.tempmultstorage.Value, self._coefficients_)
+		self._coefficients_.append(self._vcinfo_.tempmultstorage.Value, self._coefficients_)
 		self._intercept_ += d * v.intercept_
 		self._addmulcounter += 1
 
@@ -306,7 +306,7 @@ class LPSTerm(object):
 		#Matrix<double> v_coeffm = LPSTerm.UnderlyingMatrix(v);
 		#Vector<double> v_intcps = LPSTerm.UnderlyingIntercept(v);
 		mul = d_vec * v_coeffm
-		self._coefficients_.Add(mul, self._coefficients_)
+		self._coefficients_.append(mul, self._coefficients_)
 		self._intercept_ += v_intcps * d_vec
 
 	def Const(d):

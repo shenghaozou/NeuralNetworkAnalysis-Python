@@ -1,35 +1,4 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from System.Diagnostics import *
-
+﻿
 class LPSObjectiveType(object):
 	def __init__(self):
 
@@ -55,7 +24,7 @@ class NNETObjectives(object):
 			cts.And(tmp, InequalityType.LE, curr)
 			# and: input[i] < epsilon + origin[i]
 			tmp = LPSTerm.Const(origin[i])
-			tmp.Add(epsilon)
+			tmp.append(epsilon)
 			cts.And(curr, InequalityType.LE, tmp)
 			i += 1
 		cts.And(epsilon, InequalityType.GT, LPSTerm.Const(0.0)) # Quantization error!
@@ -80,7 +49,7 @@ class NNETObjectives(object):
 
 	def MaxConf(output, origLabel, newLabel):
 		tmp = LPSTerm.Const(0.0)
-		tmp.Add(output[newLabel])
+		tmp.append(output[newLabel])
 		tmp.Sub(output[origLabel])
 		return (LPSObjective(term = tmp, type = LPSObjectiveType.Max))
 
@@ -104,9 +73,9 @@ class NNetFormulas(object):
 				# Need: output[label] - output[i] >= confidence 
 				# i.e.: output[label] - output[i] - confidence >= 0
 				tmp = LPSTerm.Const(0.0) # tmp := 0
-				tmp.Add(output[label]) # tmp := output[label]
+				tmp.append(output[label]) # tmp := output[label]
 				tmp.AddMul(output[i], -1.0) # tmp := output[label] - output[i]
-				tmp.Add(-1.0 * confidence) # tmp := output[label] - output[i] - confidence
+				tmp.append(-1.0 * confidence) # tmp := output[label] - output[i] - confidence
 				ct.And(tmp, InequalityType.GE)
 			i += 1
 		return ct

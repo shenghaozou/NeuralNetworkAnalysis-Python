@@ -1,40 +1,4 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from System.Threading import *
-from System.Drawing import *
-from System.Drawing.Imaging import *
-from System.Drawing.Printing import *
-
-from System.Diagnostics import *
-from Mono.Options import *
-from M import *
-
+﻿
 class UArray(object):
 	def ToDoubleArray(point):
 		result = Array.CreateInstance(Double, point.Length)
@@ -89,7 +53,7 @@ class UArray(object):
 	ToDoubleArrayFromInt8Bytes = staticmethod(ToDoubleArrayFromInt8Bytes)
 
 	def ToDoubleArray(point, sourceIndex, length):
-		result = Array.CreateInstance(Double, length)
+		result = [None] * length
 		i = 0
 		while i < length:
 			result[i] = point[sourceIndex + i]
@@ -355,7 +319,7 @@ class URand(object):
 	NextGaussian = staticmethod(NextGaussian)
 
 	def NextRandomImage(random, size):
-		result = Array.CreateInstance(Double, size)
+		result = [None] * size
 		i = 0
 		while i < size:
 			result[i] = M.Round(255.0 * random.NextDouble())
@@ -383,7 +347,7 @@ class URand(object):
 		 <returns></returns>
 		 
 		"""
-		list = Array.CreateInstance(int, length)
+		list = [None] * length
 		i = 0
 		while i < length:
 			list[i] = i
@@ -454,7 +418,7 @@ class UDraw(object):
 		image.Save(temporaryPath)
 		Thread.Sleep(800)
 		System.Diagnostics.Process.Start(temporaryPath)
-		Console.WriteLine("Hit enter to continue...")
+		print "Hit enter to continue..."
 		Console.ReadLine()
 
 	DisplayImageAndPause = staticmethod(DisplayImageAndPause)
@@ -542,7 +506,7 @@ class UDraw(object):
 		#    }
 		#}
 		# Utils.UDraw.DisplayImageAndPause(newImagePixels, numRows, numCols, isColor);
-		# Console.WriteLine("Linf distance = {0}", Utils.UMath.LInfinityDistance(UArray.ToDoubleArray(newImagePixels), UArray.ToDoubleArray(imagePixels)));
+		# print "Linf distance = {0}", Utils.UMath.LInfinityDistance(UArray.ToDoubleArray(newImagePixels), UArray.ToDoubleArray(imagePixels));
 		return newImagePixels
 
 	LossyJPGAndBack = staticmethod(LossyJPGAndBack)
@@ -550,16 +514,16 @@ class UDraw(object):
 class Cmd(object):
 	def RunOptionSet(opt, args):
 		show_help = False
-		p = opt.Add("help", "Show this message and exit", )
+		p = opt.append("help", "Show this message and exit", )
 		try:
 			extra = p.Parse(args)
 		except OptionException, e:
-			Console.WriteLine(e.Message)
-			Console.WriteLine("Try `--help' for more information.")
+			print e.Message
+			print "Try `--help' for more information."
 			Environment.Exit(0)
 		finally:
 		if show_help:
-			Console.WriteLine("Options:")
+			print "Options:"
 			p.WriteOptionDescriptions(Console.Out)
 			Environment.Exit(0)
 

@@ -1,38 +1,4 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-
-from System.Runtime.CompilerServices import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from MathNet.Numerics import *
-from System.Diagnostics import *
-
+﻿
 class NNetReader(object):
 	def ReadBytes(input, byteCount):
 		bytes = input.ReadBytes(byteCount)
@@ -84,11 +50,11 @@ class NNetReader(object):
 			crop_siz = NNetReader.readInt32()
 			cropT_ = CropTransform(inputCoordinates, inputDim, crop_siz, True)
 		# Mean value
-		mean_val = List[Double]()
+		mean_val = [None] * 
 		mean_val_cnt = NNetReader.readInt32()
 		x = 0
 		while x < mean_val_cnt:
-			mean_val.Add(NNetReader.readSingle())
+			mean_val.append(NNetReader.readSingle())
 			x += 1
 		# Mean file
 		has_mean_file = NNetReader.readInt32()
@@ -96,7 +62,7 @@ class NNetReader(object):
 		if has_mean_file != 0:
 			mean_image_siz = NNetReader.readInt32()
 			if mean_image_siz > 0:
-				mean_image = Array.CreateInstance(Double, mean_image_siz)
+				mean_image = [None] * mean_image_siz
 			x = 0
 			while x < mean_image_siz:
 				mean_image[x] = NNetReader.readSingle()
@@ -124,21 +90,21 @@ class NNetReader(object):
 		# Array formula: output[i] = (\sum_j A[i][j] * x[j]) + B[i]
 		inputDimension = NNetReader.readInt32()
 		outputDimension = NNetReader.readInt32()
-		weights = Array.CreateInstance(Double, outputDimension)
+		weights = [None] * outputDimension
 		i = 0
 		while i < outputDimension:
-			weights[i] = Array.CreateInstance(Double, inputDimension)
+			weights[i] = [None] * inputDimension
 			j = 0
 			while j < inputDimension:
 				weights[i][j] = NNetReader.readSingle()
 				j += 1
 			i += 1
-		intercept = Array.CreateInstance(Double, outputDimension)
+		intercept = [None] * outputDimension
 		i = 0
 		while i < outputDimension:
 			intercept[i] = NNetReader.readSingle()
 			i += 1
-		Console.WriteLine("Dimensions: " + inputDimension + " * " + outputDimension)
+		print "Dimensions: " + inputDimension + " * " + outputDimension
 		return InnerProductLayer(index, weights, intercept, inputCoordinates)
 
 	ReadInnerProductLayer = staticmethod(ReadInnerProductLayer)
@@ -160,10 +126,10 @@ class NNetReader(object):
 		# read kernels
 		kernelTotalDataCount = NNetReader.readInt32()
 		kernelDataCount = kernelTotalDataCount / kernelCount
-		kernels = Array.CreateInstance(Double, kernelCount)
+		kernels = [None] * kernelCount
 		i = 0
 		while i < kernelCount:
-			kernels[i] = Array.CreateInstance(Double, kernelDataCount)
+			kernels[i] = [None] * kernelDataCount
 			j = 0
 			while j < kernelDataCount:
 				kernels[i][j] = NNetReader.readSingle()
@@ -173,7 +139,7 @@ class NNetReader(object):
 		interceptTotalDataCount = NNetReader.readInt32()
 		if interceptTotalDataCount != kernelCount:
 			raise Exception("Invalid parameters!")
-		intercepts = Array.CreateInstance(Double, kernelCount)
+		intercepts = [None] * kernelCount
 		i = 0
 		while i < kernelCount:
 			intercepts[i] = NNetReader.readSingle()
@@ -190,15 +156,15 @@ class NNetReader(object):
 		padding = NNetReader.readInt32()
 		poolMeth = NNetReader.readInt32()
 		if kernelDimension == 0:
-			Console.WriteLine("Kernel dimension = 0, treating this as global pooling!")
+			print "Kernel dimension = 0, treating this as global pooling!"
 			Debug.Assert(inputCoordinates.ColumnCount == inputCoordinates.RowCount)
 			Debug.Assert(padding == 0)
 			kernelDimension = inputCoordinates.ColumnCount
 		if poolMeth == 0: # MAX
-			Console.WriteLine("Pool method = MAX")
+			print "Pool method = MAX"
 			return MaxPoolingLayer(index, inputCoordinates, kernelDimension, padding, stride)
 		else: # AVG 
-			Console.WriteLine("Pool method = AVG")
+			print "Pool method = AVG"
 			return AvgPoolingLayer(index, inputCoordinates, kernelDimension, padding, stride)
 
 	ReadPooling = staticmethod(ReadPooling)
@@ -208,7 +174,7 @@ class NNetReader(object):
 		cropT = None
 		Console.Write("Reading layer with index {0,2}, of type {1}, input dimension {2}:", index, typeID, inputDim)
 		if typeID == 0: # "Data"
-			Console.WriteLine("Data")
+			print "Data"
 			res = NNetReader.ReadDataLayer(index, readInt32, readSingle, inputCoordinates, inputDim)
 			cropT = res.Item1
 			return res.Item2
@@ -216,13 +182,13 @@ class NNetReader(object):
 			Console.Write("InnerProduct")
 			return NNetReader.ReadInnerProductLayer(index, readInt32, readSingle, inputCoordinates, inputDim)
 		elif typeID == 2: # "ReLU"
-			Console.WriteLine("ReLU")
+			print "ReLU"
 			return NNetReader.ReadRectifiedLinearLayer(index, readInt32, readSingle, inputCoordinates, inputDim)
 		elif typeID == 3: # "SoftmaxWithLoss"
-			Console.WriteLine("SoftMax")
+			print "SoftMax"
 			return NNetReader.ReadSoftmaxLayer(readInt32, readSingle)
 		elif typeID == 4: # "Convolution"
-			Console.WriteLine("Convolution")
+			print "Convolution"
 			return NNetReader.ReadConvolutional(index, readInt32, readSingle, inputCoordinates, inputDim)
 		elif typeID == 5: # "Pooling"
 			Console.Write("Pooling, ")
@@ -256,7 +222,7 @@ class NNetReader(object):
 		# Coalesce affine layers for running the network more optimally
 		# nn.CoalesceToVirtual();
 		# GC.Collect(2);
-		# Console.WriteLine("Done.");
+		# print "Done.";
 		return nn
 
 	ReadNeuralNet = staticmethod(ReadNeuralNet)
@@ -270,7 +236,7 @@ class NNetReader(object):
 		 <param name="inputCoordinates"></param>
 		 <returns></returns>
 		"""
-		Console.WriteLine("Reading neural net from file: " + file)
+		print "Reading neural net from file: " + file
 
 	ReadBinNeuralNet = staticmethod(ReadBinNeuralNet)
 
@@ -283,6 +249,6 @@ class NNetReader(object):
 		 <param name="inputCoordinates"></param>
 		 <returns></returns>
 		"""
-		Console.WriteLine("Reading neural net from file: " + file)
+		print "Reading neural net from file: " + file
 
 	ReadTxtNeuralNet = staticmethod(ReadTxtNeuralNet)

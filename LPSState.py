@@ -84,16 +84,16 @@ class Instrumentation(object): # RELU # MAXPOOLING
 		idx = KeyValuePair[int, int](layeridx, hash)
 		if self._DCLog.ContainsKey(idx):
 			entries = self._DCLog[idx]
-			enumerator = entries.GetEnumerator()
+			for e in entries:
 			while enumerator.MoveNext():
 				entry = enumerator.Current
 				if Instrumentation.EqualDisjunctionChoices(dcs, entry):
 					self._Collisions += 1
 					return 
-			entries.Add(dcs)
+			entries.append(dcs)
 		else:
-			self._DCLog[idx] = List[Array[DisjunctionChoice]]()
-			self._DCLog[idx].Add(dcs)
+			self._DCLog[idx] = []
+			self._DCLog[idx].append(dcs)
 
 	LogDisjunctionChoices = staticmethod(LogDisjunctionChoices)
 

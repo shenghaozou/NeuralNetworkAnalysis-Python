@@ -1,46 +1,12 @@
-﻿# --------------------------------------------------------------------------------------------------
-# Neural Network Analysis Framework
-#
-# Copyright(c) Microsoft Corporation
-# All rights reserved.
-#
-# MIT License
-#  
-#  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-#  associated documentation files (the "Software"), to deal in the Software without restriction,
-#  including without limitation the rights to use, copy, modify, merge, publish, distribute,
-#  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#  
-#  The above copyright notice and this permission notice shall be included in all copies or
-#  substantial portions of the Software.
-#  
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-#  NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-#  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-#  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# --------------------------------------------------------------------------------------------------
-
-from System.Collections.Generic import *
-from System.Linq import *
-from System.Text import *
-from System.Threading.Tasks import *
-from Microsoft.SolverFoundation.Common import *
-from Microsoft.SolverFoundation.Services import *
-from SolverFoundation.Plugin.Gurobi import *
-from MathNet.Numerics.LinearAlgebra import *
-from MathNet.Numerics.LinearAlgebra.Double import *
-from MathNet.Numerics import *
-
+﻿
 class LPSolver(object):
 	def __init__(self, input_dimension, total_constraint_count, origin, originbound):
 		self._ct_cnt = 0 # Just the image, not the epsilon # Bounding rectangle
 		self._solver_ = GurobiSolver()
 		self._input_dimension_ = input_dimension
 		varCount = LPSTerm.TotalVarCount()
-		Console.WriteLine("Number of variables: " + varCount)
-		self._vars_ = Array.CreateInstance(int, varCount)
+		print "Number of variables: " + varCount
+		self._vars_ = [None] * varCount
 		i = 0
 		while i < varCount:
 			self._solver_.AddVariable("x" + i, )
@@ -92,15 +58,15 @@ class LPSolver(object):
 		# Constraints
 		numConstraints = constraints.Count
 		tmp = 0
-		Console.WriteLine("LP constraints: " + numConstraints)
+		print "LP constraints: " + numConstraints
 		varCount = LPSTerm.TotalVarCount()
-		enumerator = constraints.GetEnumerator()
+		for e in constraints:
 		while enumerator.MoveNext():
 			ct = enumerator.Current
 			self.AddConstraint(ct)
 			tmp += 1
 		# Console.Write("\rAdding LP constraints: {0:0.000}%", (double)tmp * 100.0 / numConstraints);
-		Console.WriteLine()
+		print 
 		if objective.HasValue:
 			self._solver_.AddRow("Objective", )
 			j = 0
@@ -132,19 +98,19 @@ class LPSolver(object):
 		System.Runtime.GCSettings.LatencyMode = old_gc_mode
 		# DV: For now!
 		#double solval = answer.GetSolutionValue(objective_id).ToDouble();
-		#Console.WriteLine("Objective (row) value: {0}", solval);
-		#Console.WriteLine("Objective (variable) GetValue: {0}", answer.GetValue(vars_[LPSTerm.TotalVarCount() - 1]).ToDouble());
+		#print "Objective (row) value: {0}", solval;
+		#print "Objective (variable) GetValue: {0}", answer.GetValue(vars_[LPSTerm.TotalVarCount() - 1]).ToDouble();
 		#var report = solver_.GetReport(LinearSolverReportType.None);
-		#Console.WriteLine("Report:");
-		#Console.WriteLine(report);
+		#print "Report:";
+		#print report;
 		result = answer.LpResult
 		if result != LinearResult.Optimal:
 			if result != LinearResult.Feasible:
-				Console.WriteLine("LP non-feasible")
+				print "LP non-feasible"
 				return None
 			else: # Feasible
-				Console.WriteLine("LP feasible but non-optimal solution")
-		Console.WriteLine("LP optimal solution found")
+				print "LP feasible but non-optimal solution"
+		print "LP optimal solution found"
 		vs = Array.CreateInstance(Double, self._input_dimension_)
 		i = 0
 		while i < self._input_dimension_:

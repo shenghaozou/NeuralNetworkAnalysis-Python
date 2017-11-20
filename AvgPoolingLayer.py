@@ -3,7 +3,8 @@
 		super().__init__(index, input_Coordinates, kernelDimension, padding, stride)
 
 	def Instrument(self, instr, input_, output):
-		#__ instr[Index] = Instrumentation.NoInstrumentation()
+		raise NotImplementedError("Instrumentation")
+		instr[Index] = Instrumentation.NoInstrumentation()
 
 	def ApplyKernelConcrete(self, instr, input_, outIndex, channel, row, column):
 		return self.ApplyKernel(input_, channel, row, column)
@@ -20,16 +21,18 @@
 			while j < KernelDimension:
 				x = row - Padding + i
 				y = column - Padding + j
-				if x >= InputCoordinates.RowCount or y >= InputCoordinates.ColumnCount:
+				if x >= InputCoordinates.R or y >= InputCoordinates.ColumnCount:
 					continue
 				index = InputCoordinates.GetIndex(channel, x, y)
 				if index < 0 or index >= input_.Count:
 					continue
-				.Add(, input_[index])
+				sum_ += input_[index]
+				raise NotImplementedError("Plz confirm")
 				count += 1
 				j += 1
 			i += 1
-		.Mul(, 1.0 / count)
+		sum_ *= (1.0 / count)
+		raise NotImplementedError("What is .?")
 		return sum_
 
 	def IsAffine(self):
