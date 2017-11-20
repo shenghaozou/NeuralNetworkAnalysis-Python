@@ -27,7 +27,7 @@ class BinDataAccessor(Accessor):
 	# NB: 1 byte becomes 1 double here! I.e. we were using 0-255 levels.
 	def Get(self):
 		bytes = File.ReadAllBytes(self._fn_)
-		return Utils.UArray.ToDoubleArrayFromDoubleBytes(bytes)
+		return Utils.UArray.ToDoubleArray(bytes)
 
 class TxtDataAccessor(Accessor):
 	def __init__(self, fn):

@@ -71,7 +71,7 @@ class MNIST(object):
 		while i < readImageCount:
 			# Step 4a: Read the image
 			fsI.Read(image, 0, image.Length)
-			images.append(Utils.UArray.ToDoubleArrayFromInt8Bytes(image))
+			images.append(Utils.UArray.ToDoubleArray(image))
 			i += 1
 		# Step 5: Build the data point collection
 		print "Done reading images"

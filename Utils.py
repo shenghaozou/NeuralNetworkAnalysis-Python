@@ -32,7 +32,7 @@ class UArray(object):
 
 	# NB: Python and our script treat 'float' arrays as C# doubles!
 	# Hence 8 byte offets!
-	def ToDoubleArrayFromDoubleBytes(point):
+	def ToDoubleArray(point):
 		result = Array.CreateInstance(Double, point.Length / 8)
 		n = 0
 		while n < point.Length:
@@ -42,7 +42,7 @@ class UArray(object):
 
 	ToDoubleArrayFromDoubleBytes = staticmethod(ToDoubleArrayFromDoubleBytes)
 
-	def ToDoubleArrayFromInt8Bytes(point):
+	def ToDoubleArray(point):
 		result = Array.CreateInstance(Double, point.Length)
 		i = 0
 		while i < point.Length:
