@@ -1,60 +1,49 @@
-﻿
+from __future__ import *
 
-class PoolingLayer(Layer):
-	def get_KernelDimension(self):
-		return self._kernelDimension_
+public abstract class PoolingLayer (Layer):
+    def __init__(self, index, inputCoordinates, kernelDimension, padding, stride):
+        Layer.__init__()
+        self.inputCoordinates_ = inputCoordinates
+        self.kernelDimension_ = kernelDimension
+        self.padding_ = padding
+        self.stride_ = stride
 
-	KernelDimension = property(fget=get_KernelDimension)
+        inputDimension = self.inputCoordinates_.ChannelCount * self.inputCoordinates_.RowCount * self.inputCoordinates_.ColumnCount
 
-	def get_Padding(self):
-		return self._padding_
+        rowCount = Utils.UImageCoordinate.ComputeOutputCounts(kernelDimension, inputCoordinates.RowCount, stride, padding, True)
+        columnCount = Utils.UImageCoordinate.ComputeOutputCounts(kernelDimension, inputCoordinates.ColumnCount, stride, padding, True)
 
-	Padding = property(fget=get_Padding)
+        outputDimension = inputCoordinates.ChannelCount * rowCount * columnCount
 
-	def get_Stride(self):
-		return self._stride_
+        ouputCoordinates = new ImageCoordinates(inputCoordinates.ChannelCount, rowCount, columnCount)
 
-	Stride = property(fget=get_Stride)
+        InitLayer(index, LayerType.POOLING_LAYER, inputDimension, outputDimension, inputCoordinates, ouputCoordinates)
 
-	def __init__(self, index, inputCoordinates, kernelDimension, padding, stride):
-		self._inputCoordinates_ = inputCoordinates
-		self._kernelDimension_ = kernelDimension
-		self._padding_ = padding
-		self._stride_ = stride
-		inputDimension = self._inputCoordinates_.ChannelCount * self._inputCoordinates_.RowCount * self._inputCoordinates_.ColumnCount
-		rowCount = Utils.UImageCoordinate.ComputeOutputCounts(kernelDimension, inputCoordinates.RowCount, stride, padding, True)
-		columnCount = Utils.UImageCoordinate.ComputeOutputCounts(kernelDimension, inputCoordinates.ColumnCount, stride, padding, True)
-		outputDimension = inputCoordinates.ChannelCount * rowCount * columnCount
-		ouputCoordinates = ImageCoordinates(inputCoordinates.ChannelCount, rowCount, columnCount)
-		self.InitLayer(index, LayerType.POOLING_LAYER, inputDimension, outputDimension, inputCoordinates, ouputCoordinates)
 
-	def ApplyKernelConcrete(self, instr, input, outIndex, channel, row, column):
-		pass
 
-	def ApplyKernelSymbolic(self, state, input, outIndex, channel, row, column):
-		pass
+    public abstract double ApplyKernelConcrete(NNInstrumentation instr, Vector<double> input, int outIndex, int channel, int row, int column)
+    public abstract LPSTerm ApplyKernelSymbolic(LPSState state, LPSTerm[] input, int outIndex, int channel, int row, int column)
 
-	def ApplyKernels(self, state, applyKernel, input):
-		output = .CreateVector(OutputDimension)
-		stride = self.Stride
-		jbound = Utils.UImageCoordinate.ComputeOutputCounts(self.KernelDimension, InputCoordinates.RowCount, self.Stride, self.Padding, True)
-		kbound = Utils.UImageCoordinate.ComputeOutputCounts(self.KernelDimension, InputCoordinates.ColumnCount, self.Stride, self.Padding, True)
-		i = 0
-		while i < InputCoordinates.ChannelCount:
-			j = 0
-			while j < jbound:
-				k = 0
-				while k < kbound:
-					index = OutputCoordinates.GetIndex(i, j, k)
-					value = self.applyKernel(state, input, index, i, j * stride, k * stride)
-					output[index] = value
-					k += 1
-				j += 1
-			i += 1
-		return output
 
-	def EvaluateSymbolic(self, state, input):
-		return self.ApplyKernels(state, ApplyKernelSymbolic, input)
+    protected V ApplyKernels<NumT,T,V,S>(S state, Func<S,V,int,int,int,int,T> applyKernel, V input) where NumT : struct, Num<T,V> where V : IList<T>
+        output = default(NumT).CreateVector(OutputDimension)
+        stride = Stride
 
-	def EvaluateConcrete(self, input):
-		return self.ApplyKernels(None, ApplyKernelConcrete, input)
+        jbound = Utils.UImageCoordinate.ComputeOutputCounts(KernelDimension, InputCoordinates.RowCount, Stride, Padding, true)
+        kbound = Utils.UImageCoordinate.ComputeOutputCounts(KernelDimension, InputCoordinates.ColumnCount, Stride, Padding, true)
+
+        for i in range(InputCoordinates.ChannelCount):
+            for j in range(rangejbound):
+                for k in range(kbound):
+                    index = OutputCoordinates.GetIndex(i, j, k)
+                    value = applyKernel(state, input, index, i, j * stride, k * stride)
+                    output[index] = value
+
+        return output
+
+
+    def EvaluateSymbolic(self, state, input):
+        return ApplyKernels<NumInstLPSTermArr, LPSTerm, LPSTerm[], LPSState>(state, ApplyKernelSymbolic, input)
+
+    def EvaluateConcrete(self, input):
+        return ApplyKernels<NumInstDouble, double, Vector<double>, NNInstrumentation>(null, ApplyKernelConcrete, input)

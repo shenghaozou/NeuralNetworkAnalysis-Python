@@ -1,180 +1,145 @@
-﻿
-class LayerType(object):
-	def __init__(self):
-		pass
+from abc import ABC, abstractmethod
+from __future__ import *
+from enum import Enum
 
-class Layer(object):
-	""" <summary>
-	  A layer of the neural network and the operations it supports
-	 </summary>
-	"""
-	def __init__(self):
-		pass
-		""" <summary>
-		  A layer of the neural network and the operations it supports
-		 </summary>
-		"""
- # Which layer are we? # NB: null means there is no particular structure in the input # NB: null means there is no particular structure in the output
-	def InitLayer(self, index, layerType, inputDimension, outputDimension, inputCoordinates, outputCoordinates):
-		self._index_ = index
-		self._layerType_ = layerType
-		self._inputDimension_ = inputDimension
-		self._outputDimension_ = outputDimension
-		self._inputCoordinates_ = inputCoordinates
-		self._outputCoordinates_ = outputCoordinates
+class LayerType(Enum):
+    RECTIFIED_LINEAR = 1
+    INNER_PRODUCT = 2
+    LOSS = 3
+    CONVOLUTION_LAYER = 4
+    POOLING_LAYER = 5
+    VIRTUAL_LAYER = 6
+    DATA_LAYER = 7
 
-	def get_Index(self):
-		return self._index_
 
-	Index = property(fget=get_Index)
+"""
+/// <summary>
+///  A layer of the neural network and the operations it supports
+/// <summary>
+"""
 
-	def get_LayerType(self):
-		return self._layerType_
 
-	LayerType = property(fget=get_LayerType)
+class Layer(ABC):
+    def InitLayer(self, index, layerType, inputDimension, outputDimension, inputCoordinates, outputCoordinates):
+        self.index_ = index
+        self.layerType_ = layerType
+        self.inputDimension_ = inputDimension
+        self.outputDimension_ = outputDimension
+        self.inputCoordinates_ = inputCoordinates
+        self.outputCoordinates_ = outputCoordinates
 
-	def get_InputDimension(self):
-		return self._inputDimension_
+    @abstractmethod
+    def EvaluateSymbolic(self, state, input):
+        pass
 
-	InputDimension = property(fget=get_InputDimension)
+    @abstractmethod
+    def EvaluateConcrete(self, input):
+        pass
 
-	def get_OutputDimension(self):
-		return self._outputDimension_
+    @abstractmethod
+    def Instrument(self, instrumentation, input, output):
+        pass
 
-	OutputDimension = property(fget=get_OutputDimension)
+    @abstractmethod
+    def IsAffine(self):
+        pass
 
-	def get_InputCoordinates(self):
-		return self._inputCoordinates_
+    """
+    // / < summary >
+    // / A neural network: just a collection of layers
+    // / < / summary > \
+    """
+class NeuralNet:
+    """
+    // We elevate cropping to a first-class citizen of a neural network
+    // to expose it to the symbolic evaluator. If cropT == null, then no
+    // cropping happens.
+    """
+    def __init__(self):
+        self.cropT = None
+        self.layers_ = []
 
-	InputCoordinates = property(fget=get_InputCoordinates)
+    def AddCropTransform(self, crop):
+        self.cropT = crop
+    def AddLayer(self, layer):
+        self.layers_.append(layer)
 
-	def get_OutputCoordinates(self):
-		return self._outputCoordinates_
+    def LayerCount(self):
+        return len(self.layers_)
 
-	OutputCoordinates = property(fget=get_OutputCoordinates)
+    def InputDimensionPostCrop(self):
+        return self.layers_[0].InputDimension
 
-	def EvaluateSymbolic(self, state, input):
-		pass
+    def InputDimensionPreCrop(self):
+        if self.cropT != None:
+            return self.cropT.OriginalDimension()
+        else:
+            return self.layers_[0].InputDimension
 
-	def EvaluateConcrete(self, input):
-		pass
+    def CropMaybe(self, image):
+        if self.cropT != None:
+            return self.cropT.Transform(image)
+        else:
+            return image
 
-	def Instrument(self, instrumentation, input, output):
-		pass
+    def UnCropMaybe(self, orig, image):
+        if self.cropT != None:
+            return self.cropT.UnTransform(orig, image)
+        else:
+            return image
 
-	def IsAffine(self):
-		pass
+    def LayerTypes(self):
+        layerTypes = []
+        for i in range(self.LayerCount()):
+            layerTypes.append(self.layers_[i].LayerType)
+        return layerTypes
 
-class NeuralNet(object):
-	""" <summary>
-	 A neural network: just a collection of layers
-	 </summary>
-	"""
-	def __init__(self):
-		""" <summary>
-		 A neural network: just a collection of layers
-		 </summary>
-		"""
-		# We elevate cropping to a first-class citizen of a neural network
-		# to expose it to the symbolic evaluator. If cropT == null, then no 
-		# cropping happens.
-		self._cropT = None
-		self._layers_ = [None] * 
+    def EvaluateNNConcretePostCrop(self, input, instr = None):
+        return EvaluateNNConcretePostCrop(DenseVector.OfArray(input), instr)
 
-	def AddCropTransform(self, crop):
-		self._cropT = crop
+    def EvaluateNNConcretePostCrop(self, input, instr):
+        v = input
+        for i in range(self.LayerCount()):
+            curr = self.layers_[i]
+            w = curr.EvaluateConcrete(v)
+            if instr != None:
+                curr.Instrument(instr, v, w)
+                v = w
+        return v
 
-	def AddLayer(self, layer):
-		self._layers_.append(layer)
+    def EvaluateNNSymbolicPostCrop(self, state, input):
+        v = input
+        for i in range(self.LayerCount()):
+            curr = self.layers_[i]
+            stopwatch = Stopwatch()
+            stopwatch.Start()
+            w = curr.EvaluateSymbolic(state, v)
+            stopwatch.Stop()
+            v = w
+            print "Symbolic interpreter: layer index:" + `curr.Index` + ", elapsed milliseconds = " + `stopwatch.ElapsedMilliseconds`
+        return v
 
-	def get_Layers(self):
-		return self._layers_
 
-	Layers = property(fget=get_Layers)
+     def CoalesceToVirtual(self):
+        newLayers = []
+        currAffList = []
+        for i in range(self.LayerCount()):
+            curr = self.layers_[i]
+            if curr.IsAffine():
+                currAffList.append(curr)
+                continue
+            """
+            // Current layer is not affine
+            // If we have anything in the affine list, we should coalesce and insert before current.
+            """
+            if len(currAffList) > 0:
+                virt = VirtualLayer(currAffList)
+                currAffList.Clear()
+                newLayers.append(virt)
+            newLayers.append(curr)
 
-	def get_LayerCount(self):
-		return self._layers_.Count
-
-	LayerCount = property(fget=get_LayerCount)
-
-	def get_InputDimensionPostCrop(self):
-		return self._layers_[0].InputDimension
-
-	InputDimensionPostCrop = property(fget=get_InputDimensionPostCrop)
-
-	def get_InputDimensionPreCrop(self):
-		if self._cropT != None:
-			return self._cropT.OriginalDimension()
-		return self._layers_[0].InputDimension
-
-	InputDimensionPreCrop = property(fget=get_InputDimensionPreCrop)
-
-	def CropMaybe(self, image):
-		if self._cropT != None:
-			return self._cropT.Transform(image)
-		return image
-
-	def UnCropMaybe(self, orig, image):
-		if self._cropT != None:
-			return self._cropT.UnTransform(orig, image)
-		return image
-
-	def LayerTypes(self):
-		layerTypes = [None] * 
-		i = 0
-		while i < self.LayerCount:
-			layerTypes.append(self.Layers[i].LayerType)
-			i += 1
-		return layerTypes
-
-	def EvaluateNNConcretePostCrop(self, input, instr):
-		return self.EvaluateNNConcretePostCrop(DenseVector.OfArray(input), instr)
-
-	def EvaluateNNConcretePostCrop(self, input, instr):
-		v = input
-		i = 0
-		while i < self.LayerCount:
-			curr = self.Layers[i]
-			w = curr.EvaluateConcrete(v)
-			if instr != None:
-				curr.Instrument(instr, v, w)
-			v = w
-			i += 1
-		return v.ToArray()
-
-	def EvaluateNNSymbolicPostCrop(self, state, input):
-		v = input
-		i = 0
-		while i < self.LayerCount:
-			curr = self.Layers[i]
-			stopwatch = Stopwatch()
-			stopwatch.Start()
-			w = curr.EvaluateSymbolic(state, v)
-			stopwatch.Stop()
-			v = w
-			print "Symbolic interpreter: layer index: {0,2}, elapsed milliseconds = {1}", curr.Index, stopwatch.ElapsedMilliseconds
-			i += 1
-		return v
-
-	def CoalesceToVirtual(self):
-		newLayers = [None] * 
-		currAffList = [None] * 
-		i = 0
-		while i < self.LayerCount:
-			curr = self.Layers[i]
-			if curr.IsAffine():
-				currAffList.append(curr)
-				continue
-			# Current layer is not affine
-			# If we have anything in the affine list, we should coalesce and insert before current.
-			if currAffList.Count > 0:
-				virt = VirtualLayer(currAffList)
-				currAffList.Clear()
-				newLayers.append(virt)
-			newLayers.append(curr)
-			i += 1
-		if currAffList.Count > 0:
-			virt = VirtualLayer(currAffList)
-			currAffList.Clear()
-			newLayers.append(virt)
-		self._layers_ = newLayers
+        if len(currAffList) > 0:
+            virt = VirtualLayer(currAffList)
+            currAffList.Clear()
+            newLayers.append(virt)
+        newLayers.append(curr)
