@@ -67,6 +67,8 @@ class UMath(object):
 		a = np.around(a)
 		if np.all(np.array(arr) == a):
 			return a
+		raise ValueError("Invalid integer in array!")
+
 
 	@staticmethod
 	def Max(output):
@@ -221,21 +223,3 @@ class UDraw(object):
 		newImage = cv2.imread(tmpImage)
 		newImagePixels = UDraw.FromBitmap(newImage, *newImage.shape, isColor, isRowOrder)
 		return newImagePixels
-
-class Cmd(object):
-	def RunOptionSet(opt, args):
-		show_help = False
-		p = opt.append("help", "Show this message and exit", )
-		try:
-			extra = p.Parse(args)
-		except OptionException, e:
-			print e.Message
-			print "Try `--help' for more information."
-			Environment.Exit(0)
-		finally:
-		if show_help:
-			print "Options:"
-			p.WriteOptionDescriptions(Console.Out)
-			Environment.Exit(0)
-
-	RunOptionSet = staticmethod(RunOptionSet)
