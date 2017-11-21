@@ -1,25 +1,10 @@
-﻿
+﻿import tempfile, os
+import numpy as np
+import cv2
+
+<<<<<<< HEAD
 class UArray(object):
-	def ToDoubleArray(point):
-		result = Array.CreateInstance(Double, point.Length)
-		i = 0
-		while i < point.Length:
-			result[i] = point[i]
-			i += 1
-		return result
-
-	ToDoubleArray = staticmethod(ToDoubleArray)
-
-	def ToFloatArray(point):
-		result = Array.CreateInstance(Single, point.Length)
-		i = 0
-		while i < point.Length:
-			result[i] = point[i]
-			i += 1
-		return result
-
-	ToFloatArray = staticmethod(ToFloatArray)
-
+=======
 	def ToDoubleArray(point):
 		result = Array.CreateInstance(Double, point.Length)
 		i = 0
@@ -97,69 +82,49 @@ class UArray(object):
 			result[i] = UMath.Clamp(array[i] * scale + offset, 0.0, 255.0)
 			i += 1
 		return result
+>>>>>>> ce3bbda448a92936f8dccbf2cd8bde79d66d5fb4
 
-	ToRGBArray = staticmethod(ToRGBArray)
+    @staticmethod
+    def ToDoubleArray(arr, sourceIndex=0, length=None):
+        if length is None:
+            length = len(arr)
+        return np.array(arr, dtype=np.float64)[sourceIndex:sourceIndex+length]
 
-	def ToIntArray(array):
-		intArray = Array.CreateInstance(int, array.Length)
-		i = 0
-		while i < array.Length:
-			intArray[i] = array[i]
-			i += 1
-		return intArray
+    @staticmethod
+    def ToFloatArray(arr):
+        return np.array(arr, dtype=np.float32)
 
-	ToIntArray = staticmethod(ToIntArray)
+    @staticmethod
+    def ToByteArray(arr):
+        return np.array(arr, dtype=np.uint8)
 
-	def InPlaceRoundDoubleArray(array):
-		i = 0
-		while i < array.Length:
-			array[i] = Math.Round(array[i])
-			i += 1
+    @staticmethod
+    def ToIntArray(arr):
+        return np.array(arr, dtype=np.uint64)
 
-	InPlaceRoundDoubleArray = staticmethod(InPlaceRoundDoubleArray)
+    @staticmethod
+    def ToRGBArray(arr, scale, offset):
+        arr = np.array(arr)
+        return np.array(scale * arr + offset, dtype=np.uint8)
 
-	def ComputeRoundIdenticals(oldarr, newarr):
-		samcount = 0
-		i = 0
-		while i < oldarr.Length:
-			if Math.Round(oldarr[i]) == Math.Round(newarr[i]):
-				samcount += 1
-			i += 1
-		return samcount
+    @staticmethod
+    def InPlaceRoundDoubleArray(arr):
+    	return np.around(arr)
 
-	ComputeRoundIdenticals = staticmethod(ComputeRoundIdenticals)
+    @staticmethod
+    def ComputeRoundIdenticals(arr1, arr2):
+    	a1 = np.around(arr1)
+    	a2 = np.around(arr2)
+    	return (a1 == a2).sum()
 
 class UMath(object):
-	def SoftMax(input):
-		""" <summary>
-		 In-place soft max
-		 </summary>
-		 <param name="input"></param>
-		"""
-		max = input[0]
-		min = input[0]
-		i = 0
-		while i < input.Length:
-			if input[i] > max:
-				max = input[i]
-			i += 1
-		k = max - 4
-		i = 0
-		while i < input.Length:
-			input[i] = M.Exp(input[i] - k)
-			i += 1
-		sum = 0
-		i = 0
-		while i < input.Length:
-			sum += input[i]
-			i += 1
-		i = 0
-		while i < input.Length:
-			input[i] /= sum
-			i += 1
 
-	SoftMax = staticmethod(SoftMax)
-
+	@staticmethod
+	def SoftMax(x):
+	    """Compute softmax values for each sets of scores in x."""
+    	return np.exp(x) / np.sum(np.exp(x), axis=0)
+	
+	@staticmethod
 	def EnsureInt(value):
 		""" <summary>
 		 Rounds a double and ensures it was an integer
@@ -167,177 +132,91 @@ class UMath(object):
 		 <param name="value">The double to be converted</param>
 		 <returns>The integer represented by the double</returns>
 		"""
-		intValue = M.Round(value)
+		intValue = np.around(value)
 		if value != intValue:
-			raise SystemException("Invalid integer: " + value)
+			raise ValueError("Invalid integer: " + value)
 		return intValue
 
-	EnsureInt = staticmethod(EnsureInt)
-
-	def EnsureIntArray(array):
+	
+	@staticmethod
+	def EnsureIntArray(arr):
 		""" <summary>
 		 Converts an entire array to integers, ensuring their format
 		 </summary>        
 		"""
-		integerArray = Array.CreateInstance(int, array.Length)
-		i = 0
-		while i < array.Length:
-			integerArray[i] = UMath.EnsureInt(array[i])
-			i += 1
-		return integerArray
+		a = np.around(a)
+		if np.all(np.array(arr) == a):
+			return a
 
-	EnsureIntArray = staticmethod(EnsureIntArray)
-
+	@staticmethod
 	def Max(output):
-		max = output[0]
-		maxIndex = 0
-		i = 1
-		while i < output.Length:
-			if output[i] > max:
-				max = output[i]
-				maxIndex = i
-			i += 1
-		return Tuple[int, int](max, maxIndex)
-
-	Max = staticmethod(Max)
-
-	def Max(output):
-		max = output[0]
-		maxIndex = 0
-		i = 1
-		while i < output.Length:
-			if output[i] > max:
-				max = output[i]
-				maxIndex = i
-			i += 1
-		return Tuple[Single, int](max, maxIndex)
-
-	Max = staticmethod(Max)
-
-	def Max(output):
-		max = output[0]
-		maxIndex = 0
-		i = 1
-		while i < output.Length:
-			if output[i] > max:
-				max = output[i]
-				maxIndex = i
-			i += 1
-		return Tuple[Double, int](max, maxIndex)
-
-	Max = staticmethod(Max)
-
+		i = np.argmax(output)
+		return output[i], i
+	
+	@staticmethod
 	def MaxExcluding(idx, output):
-		max = output[1] if (idx == 0) else output[0]
-		maxIndex = 1 if (idx == 0) else 0
-		i = (maxIndex + 1)
-		while i < output.Length:
-			if i == idx:
-				continue # excluded index
-			if output[i] > max:
-				max = output[i]
-				maxIndex = i
-			i += 1
-		return Tuple[Double, int](max, maxIndex)
+		tmp = np.ma.array(output, mask=False)
+		tmp.mask[idx] = True
+		return UMath.Max(tmp)
 
-	MaxExcluding = staticmethod(MaxExcluding)
+	@staticmethod
+	def Clamp(value, minimum, maximum):
+		return np.clip(value, minimum, maximum)
 
-	def Clamp(value, min, max):
-		return min if (value < min) else (max if (value > max) else value)
+	@staticmethod
+	def ClampArray(values, minimum, maximum):
+		return np.clip(values, minimum, maximum)
 
-	Clamp = staticmethod(Clamp)
-
-	def Clamp(value, min, max):
-		return min if (value < min) else (max if (value > max) else value)
-
-	Clamp = staticmethod(Clamp)
-
-	def ClampArray(values, min, max):
-		newValues = Array.CreateInstance(Double, values.Length)
-		i = 0
-		while i < values.Length:
-			newValues[i] = UMath.Clamp(values[i], min, max)
-			i += 1
-		return newValues
-
-	ClampArray = staticmethod(ClampArray)
-
-	def ClampArray(values, min, max):
-		newValues = Array.CreateInstance(int, values.Length)
-		i = 0
-		while i < values.Length:
-			newValues[i] = UMath.Clamp(values[i], min, max)
-			i += 1
-		return newValues
-
-	ClampArray = staticmethod(ClampArray)
-
+	@staticmethod
 	def LInfinityDistance(point1, point2):
 		""" <summary>
 		 Calculates the LInfinity distance between two points in Rn
 		 </summary>
 		"""
-		if point1.Length != point2.Length:
-			raise SystemException("Invalid inputs!")
-		max = M.Abs(point1[0] - point2[0])
-		i = 1
-		while i < point1.Length:
-			cur = M.Abs(point1[i] - point2[i])
-			if cur > max:
-				max = cur
-			i += 1
-		return max
+		p1 = np.array(point1)
+		p2 = np.array(point2)
+		if p1.shape != p2.shape:
+			raise ValueError("Invalid inputs!")
+		return np.max(np.abs(p1 - p2))
 
-	LInfinityDistance = staticmethod(LInfinityDistance)
-
+	@staticmethod
 	def L1Distance(point1, point2):
-		if point1.Length != point2.Length:
-			raise SystemException("Invalid inputs!")
-		curr = M.Abs(point1[0] - point2[0])
-		i = 1
-		while i < point1.Length:
-			curr += M.Abs(point1[i] - point2[i])
-			i += 1
-		return (curr / point1.Length)
-
-	L1Distance = staticmethod(L1Distance)
+		p1 = np.array(point1)
+		p2 = np.array(point2)
+		if p1.shape != p2.shape:
+			raise ValueError("Invalid inputs!")
+		return np.sum(np.abs(p1 - p2))
 
 class URand(object):
 	""" <summary>
 	 Various functions that utilize randomness
 	 </summary>
 	"""
-	def NextGaussian(random):
+	@staticmethod
+	def NextGaussian(rand): 
 		""" <summary>
 		 Returns a double drawn from a Gaussian distribution(0,1)
 		 </summary>
 		"""
-		u1 = random.NextDouble()
-		u2 = random.NextDouble()
-		return M.Sqrt(-2.0 * M.Log(u1)) * M.Sin(2.0 * M.PI * u2)
+		assert isinstance(rand, random.Random), "Wrong Type!"
+		return rand.gauss(0, 1)
+		
+	@staticmethod
+	def NextRandomImage(rand, size):
+		assert isinstance(rand, random.Random), "Wrong Type!"
+		arr = [rand.randint(0, 255) for i in range]
+		return np.array(arr, dtype=np.uint8)
 
-	NextGaussian = staticmethod(NextGaussian)
-
-	def NextRandomImage(random, size):
-		result = [None] * size
-		i = 0
-		while i < size:
-			result[i] = M.Round(255.0 * random.NextDouble())
-			i += 1
-		return result
-
-	NextRandomImage = staticmethod(NextRandomImage)
-
-	def NextGaussian(mean, sd, random):
+	@staticmethod
+	def NextGaussian(mean, sd, rand):
 		""" <summary>
 		  Draws a double from a Gaussian distribution weith a specific mean and deviation
 		 </summary>
 		 <returns></returns>
 		"""
-		return sd * URand.NextGaussian(random) + mean
+		return sd * URand.NextGaussian(rand) + mean
 
-	NextGaussian = staticmethod(NextGaussian)
-
+	@staticmethod
 	def NextPermutation(random, length):
 		""" <summary>
 		 Standard Fisher-Yates random permutation
@@ -347,169 +226,81 @@ class URand(object):
 		 <returns></returns>
 		 
 		"""
-		list = [None] * length
+		lst = [None] * length
 		i = 0
 		while i < length:
-			list[i] = i
+			lst[i] = i
 			i += 1
 		n = length
 		i = length - 1
 		while i > 0:
 			# swap randomly with element in (i, length]
-			k = random.Next(i, length)
-			bucket = list[k]
-			list[k] = list[i]
-			list[i] = bucket
+			k = rand.randint(i + 1, length)
+			bucket = lst[k]
+			lst[k] = lst[i]
+			lst[i] = bucket
 			i -= 1
-		return list
+		return lst
 
-	NextPermutation = staticmethod(NextPermutation)
-
-	def GetNoisyPoint(point, addedNoiseSD, random):
-		newPoint = Array.CreateInstance(Double, point.Length)
-		addedNoise = Utils.URand.NextGaussian(0.0, addedNoiseSD, random)
-		j = 0
-		while j < point.Length:
-			newPoint[j] = M.Min(255.0, M.Max(0.0, point[j] + addedNoise))
-			j += 1
-		return newPoint
-
-	GetNoisyPoint = staticmethod(GetNoisyPoint)
-
+	@staticmethod
+	def GetNoisyPoint(point, addedNoiseSD, rand):
+		addedNoise = URand.NextGaussian(0.0, addedNoiseSD, rand)
+		pt = np.array(point)
+		return np.clip(pt + addedNoise, 0.0, 255.0)
+		
 class UDraw(object):
 	""" <summary>
 	 Displaying images
 	 </summary>
 	"""
+
+	#########TODO: CHECK!###########
+	@staticmethod
 	def DrawGrayscalePixels(pixels, numRows, numCols, isRowOrder):
-		image = Bitmap(numRows, numCols)
-		i = 0
-		while i < numRows:
-			j = 0
-			while j < numCols:
-				greyScale = pixels[numRows * j + i] if isRowOrder else pixels[numCols * i + j]
-				c = Color.FromArgb(255, greyScale, greyScale, greyScale)
-				image.SetPixel(i, j, c)
-				j += 1
-			i += 1
+		image = np.array(pixels, dtype=np.uint8)
+		order = 'C' if isRowOrder else 'F'
+		image = np.reshape(image, (numRows, numRows), order=order)
 		return image
 
-	DrawGrayscalePixels = staticmethod(DrawGrayscalePixels)
-
-	def DrawRGBPixels(pixels, numRows, numCols, isRowOrder):
-		image = Bitmap(numRows, numCols)
-		colorOffset = numRows * numCols
-		i = 0
-		while i < numRows:
-			j = 0
-			while j < numCols:
-				pixelOffset = numRows * j + i if isRowOrder else numCols * i + j
-				c = Color.FromArgb(255, pixels[pixelOffset], pixels[pixelOffset + colorOffset], pixels[pixelOffset + 2 * colorOffset])
-				image.SetPixel(i, j, c)
-				j += 1
-			i += 1
+	#########TODO: CHECK!##########
+	@staticmethod
+	def DrawRGBPixels(pixels, numRows, numCols):
+		image = np.array(pixels, dtype=np.uint8)
+		order = 'C' if isRowOrder else 'F'
+		image = np.reshape(image, (3, numRows, numRows), order=order)
 		return image
 
-	DrawRGBPixels = staticmethod(DrawRGBPixels)
-
+	@staticmethod
 	def DisplayImageAndPause(imagePixels, numRows, numCols, isColor, isRowOrder):
-		image = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)
-		temporaryPath = Path.Combine(System.IO.Path.GetTempPath(), "visualization.png")
-		image.Save(temporaryPath)
-		Thread.Sleep(800)
-		System.Diagnostics.Process.Start(temporaryPath)
-		print "Hit enter to continue..."
-		Console.ReadLine()
+		image = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor 
+				else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)
+		cv2.imshow("Image Visualization", image)
+		cv2.waitKey(0)
+		cv2.destroyAllWindows()
 
-	DisplayImageAndPause = staticmethod(DisplayImageAndPause)
-
+	@staticmethod
 	def Rotate(imagePixels, numRows, numCols, isColor, degrees, isRowOrder):
-		image_0 = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)
-		g_0 = Graphics.FromImage(image_0)
-		g_0.RotateTransform(degrees)
-		g_0.DrawImage(image_0, Point(0, 0))
-		image = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)
-		g = Graphics.FromImage(image)
-		curr = image
-		i = 0
-		while i < degrees:
-			g.RotateTransform(i)
-			g.DrawImage(curr, Point(0, 0))
-			ms = MemoryStream()
-			curr.Save(ms, ImageFormat.Png)
-			curr = Bitmap(ms)
-			g = Graphics.FromImage(curr)
-			i += 2
-		g.DrawImage(image_0, Point(0, 0))
-		#MemoryStream ms = new MemoryStream();
-		#image.Save(ms, ImageFormat.Png);
-		#Bitmap rotated = new Bitmap(ms); 
+		image_0 = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor
+				  else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)
+		curr = imutils.rotate_bound(image_0, degrees)
 		return UDraw.FromBitmap(curr, numRows, numCols, isColor, isRowOrder)
-
-	Rotate = staticmethod(Rotate)
-
+	
+	@staticmethod
 	def FromBitmap(m, numRows, numCols, isColor, isRowOrder):
-		newImagePixels = Array.CreateInstance(int, numRows * numCols * (3 if isColor else 1))
-		x = 0
-		while x < numRows:
-			y = 0
-			while y < numCols:
-				pixel = m.GetPixel(y, x)
-				if isColor:
-					newImagePixels[0 * numRows * numCols + x * numCols + y] = pixel.R
-					newImagePixels[1 * numRows * numCols + x * numCols + y] = pixel.G
-					newImagePixels[2 * numRows * numCols + x * numCols + y] = pixel.B
-				else:
-					newImagePixels[x * numCols + y] = (pixel.R + pixel.G + pixel.B) / 3
-				y += 1
-			x += 1
-		return newImagePixels
+		return m.reshape(m.size)
 
-	FromBitmap = staticmethod(FromBitmap)
-
-	# NB: photoquality 0 - 50 
+	@staticmethod
 	def LossyJPGAndBack(imagePixels, numRows, numCols, isColor, photoquality, isRowOrder):
-		image = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)
-		encoders = ImageCodecInfo.GetImageEncoders()
-		jpgEncoder = None
-		i = 0
-		while i < encoders.Length:
-			if encoders[i].FormatID == ImageFormat.Jpeg.Guid:
-				jpgEncoder = encoders[i]
-				break
-			i += 1
-		Trace.Assert(jpgEncoder != None)
-		myEncoder = System.Drawing.Imaging.Encoder.Quality
-		myEncoderParameters = EncoderParameters(1)
-		myEncoderParameter = EncoderParameter(myEncoder, photoquality)
-		myEncoderParameters.Param[0] = myEncoderParameter
-		mstream = MemoryStream()
-		image.Save(mstream, jpgEncoder, myEncoderParameters)
-		reload_image = System.Drawing.Image.FromStream(mstream)
-		m = Bitmap(reload_image)
-		newImagePixels = UDraw.FromBitmap(m, numRows, numCols, isColor, isRowOrder)
-		#for (int x = 0; x < numRows; x++)
-		#{
-		#    for (int y = 0; y < numCols; y++)
-		#    {
-		#        Color pixel = m.GetPixel(y,x);
-		#        if (isColor)
-		#        {
-		#            newImagePixels[0* numRows * numCols + x * numCols + y] = pixel.R;
-		#            newImagePixels[1* numRows * numCols + x * numCols + y] = pixel.G;
-		#            newImagePixels[2* numRows * numCols + x * numCols + y] = pixel.B;
-		#        }
-		#        else
-		#        {
-		#            newImagePixels[x * numCols + y] = pixel.R + pixel.G + pixel.B;
-		#        }
-		#    }
-		#}
-		# Utils.UDraw.DisplayImageAndPause(newImagePixels, numRows, numCols, isColor);
-		# print "Linf distance = {0}", Utils.UMath.LInfinityDistance(UArray.ToDoubleArray(newImagePixels), UArray.ToDoubleArray(imagePixels));
-		return newImagePixels
+		image = UDraw.DrawRGBPixels(imagePixels, numRows, numCols, isRowOrder) if isColor 
+				else UDraw.DrawGrayscalePixels(imagePixels, numRows, numCols, isRowOrder)		
 
-	LossyJPGAndBack = staticmethod(LossyJPGAndBack)
+		assert 0 <= photoquality <= 50, "0 <= photoquality <= 50; provided: %d"%photoquality
+		tmpDir = tempfile.mkdtemp()
+		tmpImage = os.path.append(tmpDir, 'tmp.jpg')
+		cv2.imwrite( , image,  [int(cv2.IMWRITE_JPEG_QUALITY), photoquality])
+		newImage = cv2.imread(tmpImage)
+		newImagePixels = UDraw.FromBitmap(newImage, *newImage.shape, isColor, isRowOrder)
+		return newImagePixels
 
 class Cmd(object):
 	def RunOptionSet(opt, args):
