@@ -1,6 +1,7 @@
 import LPSTerm
 import math
 import Utils
+import Robustness
 
 class LPSolver:
     def __init__(self, input_dimension, total_constraint_count, origin, originbound):
@@ -13,10 +14,10 @@ class LPSolver:
         for i in range(varCount):
             vid = 0
             self.solver_.AddVariable("x" + i, out vid)
-            self.solver_.SetIntegrality(vid, RobustnessOptions.Integrality)
+            self.solver_.SetIntegrality(vid, Robustness.RobustnessOptions.Integrality)
             if i < len(origin):
-                lb = max(Utils.RobustnessOptions.MinValue, origin[i] - originbound)
-                ub = min(Utils.RobustnessOptions.MaxValue, origin[i] + originbound)
+                lb = max(Robustness.RobustnessOptions.MinValue, origin[i] - originbound)
+                ub = min(Robustness.RobustnessOptions.MaxValue, origin[i] + originbound)
 
                 if lb <= ub:
                     """// Tighter bounds for the image variables!"""
@@ -26,7 +27,7 @@ class LPSolver:
                     // The programmer got the Min / Max values wrong."""
                     self.solver_.SetBounds(vid, origin[i] - originbound, origin[i] + originbound)
             else:
-                self.solver_.SetBounds(vid, Utils.RobustnessOptions.MinValue, Utils.RobustnessOptions.MaxValue)
+                self.solver_.SetBounds(vid, Robustness.RobustnessOptions.MinValue, Utils.RobustnessOptions.MaxValue)
             vars_[i] = vid
 
 

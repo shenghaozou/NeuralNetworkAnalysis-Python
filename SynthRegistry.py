@@ -69,17 +69,17 @@ def RecordAtomically(self, datasetName, datasetIndex, origLab, synthLab, scale, 
         e = SynthEntry()
         e.datasetName = datasetName
 
-        e.origPngName = CreatePnG("orig", datasetName, datasetIndex, origLab.datum, scale, offset, numRows, numCols, isColor, isRowOrder)
+        e.origPngName = self.CreatePnG("orig", datasetName, datasetIndex, origLab.datum, scale, offset, numRows, numCols, isColor, isRowOrder)
         e.origLabel = origLab.actualLabel
 
-        e.synthPngName = CreatePnG("snth", datasetName, datasetIndex, synthLab.datum, scale, offset, numRows, numCols, isColor, isRowOrder)
+        e.synthPngName = self.CreatePnG("snth", datasetName, datasetIndex, synthLab.datum, scale, offset, numRows, numCols, isColor, isRowOrder)
         e.synthLabel = synthLab.actualLabel
 
         diff = [None] * len(origLab.datum)
         for i in  range(len(origLab.datum)):
             diff[i] = 5 * (origLab.datum[i] - synthLab.datum[i]) + 100
 
-        CreatePnG("diffx5o100", datasetName, datasetIndex,diff,scale,offset,numRows,numCols,isColor,isRowOrder)
+        self.CreatePnG("diffx5o100", datasetName, datasetIndex,diff,scale,offset,numRows,numCols,isColor,isRowOrder)
 
         print "Orig path  =" + e.origPngName
         print "Synth path =" + e.synthPngName
