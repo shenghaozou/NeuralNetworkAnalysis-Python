@@ -1,118 +1,118 @@
+from numpy import array, eye, hstack, ones, vstack, zeros
+import numpy as np
 import LPSTerm
-import math
-import Utils
-import Robustness
 
-class LPSolver:
-    def __init__(self, input_dimension, total_constraint_count, origin, originbound):
-        self.solver_ = GurobiSolver()
-        self.input_dimension_ = input_dimension
+class CVXOPTPara(object):
+    def __init__(self, input_dimension, total_constraint_count):
+        self.G = None
+
         varCount = LPSTerm.TotalVarCount()
+
         print "Number of variables: " + `varCount`
-        self.vars_ = [None] * len(varCount)
+
+        self.h = None
+
+    def SetBounds(self, coefficients, lb, ub):
+        self.SetUpperBound(coefficients, ub)
+        self.SetLowerBound(coefficients, lb)
+
+
+    def SetCoefficient(self, coefficients):
+        if self.G == None:
+            self.G = np.arange(coefficients).reshape(self.varCount, 1)
+        else:
+            self.G = hstack([self.G, np.arange(coefficients).reshape(self.varCount, 1)])
+
+    def SetUpperBound(self, coefficients, intercept):
+        self.SetCoefficient(coefficients)
+        if self.h == None:
+            self.h = np.array(intercept)
+        else:
+            self.h = hstack([self.h, intercept])
+
+    def SetLowerBound(self, coefficients, intercept):
+        self.SetUpperBound(coefficients, intercept)
+        self.h[-1] = -self.h[-1]
+        self.G[:, -1] = -self.G[:, -1]
+
+    def Setc(self, coefficients):
+        self.c = coefficients
+
+    def reversec(self):
+        self.c = -self.c
+
+    #def SetIntegrality()????
+
+class LPSolver(object):
+    def __init__(self,input_dimension, total_constraint_count, origin, originbound):
+        self.cvxPara = CVXOPTPara(input_dimension, total_constraint_count)
         self.ct_cnt = 0
+        varCount = LPSTerm.TotalVarCount()
+
         for i in range(varCount):
-            vid = 0
-            self.solver_.AddVariable("x" + i, out vid)
-            self.solver_.SetIntegrality(vid, Robustness.RobustnessOptions.Integrality)
+            I = np.zeros(varCount)
+            I[i] = 1
             if i < len(origin):
-                lb = max(Robustness.RobustnessOptions.MinValue, origin[i] - originbound)
-                ub = min(Robustness.RobustnessOptions.MaxValue, origin[i] + originbound)
+                lb = max(Utils.RobustnessOptions.MinValue, origin[i] - originbound)
+                ub = min(Utils.RobustnessOptions.MaxValue, origin[i] + originbound)
 
                 if lb <= ub:
-                    """// Tighter bounds for the image variables!"""
-                    self.solver_.SetBounds(vid, lb, ub)
+                    self.cvxPara.SetBounds(I, lb, ub)
                 else:
-                    """// Bound validation failed, very weird.Oh well just don't use the bounds.
-                    // The programmer got the Min / Max values wrong."""
-                    self.solver_.SetBounds(vid, origin[i] - originbound, origin[i] + originbound)
+                    self.cvxPara.SetBounds(I, origin[i] - originbound, origin[i] + originbound)
             else:
-                self.solver_.SetBounds(vid, Robustness.RobustnessOptions.MinValue, Utils.RobustnessOptions.MaxValue)
-            vars_[i] = vid
-
+                self.cvxPara.SetBounds(I, Utils.RobustnessOptions.MinValue, Utils.RobustnessOptions.MaxValue)
 
     def AddConstraint(self, ct):
-        ctid = self.ct_cnt
-        self.solver_.AddRow("constraint" + self.ct_cnt, out ctid)
+
+        ctid = ct
         coefficients = ct.Term.GetCoefficients()
         totalvars = LPSTerm.TotalVarCount()
 
-        for j in range(totalvars):
-            """
-            // Due to the way MSF works, if we are adding a 0 coefficient
-            // this amounts to actually removing it.However, the coefficient
-            // is not there to start with, hence let's not add it, at all!
-            """
-            if coefficients[j] != 0
-                self.solver_.SetCoefficient(ctid, self.vars_[j], coefficients[j])
-
         if ct.Inequality == InequalityType.LT:
-            self.solver_.SetUpperBound(ctid, -ct.Term.Intercept)
+            self.cvxPara.SetUpperBound(coefficients, ct.Term.Intercept)
         elif ct.Inequality == InequalityType.LE:
-            self.solver_.SetUpperBound(ctid, -ct.Term.Intercept)
+            self.cvxPara.SetUpperBound(coefficients, ct.Term.Intercept)
         elif ct.Inequality == InequalityType.GT:
-            self.solver_.SetLowerBound(ctid, -ct.Term.Intercept)
+            self.cvxPara.SetLowerBound(coefficients, ct.Term.Intercept)
         elif ct.Inequality == InequalityType.GE:
-            self.solver_.SetLowerBound(ctid, -ct.Term.Intercept)
+            self.cvxPara.SetLowerBound(coefficients, ct.Term.Intercept)
         elif ct.Inequality == InequalityType.EQ:
-            self.solver_.SetBounds(ctid, -ct.Term.Intercept, -ct.Term.Intercept)
+            self.cvxPara.SetBounds(coefficients, ct.Term.Intercept, ct.Term.Intercept)
 
         self.ct_cnt += 1
-
 
     def AddConstraints(self, constraints, objective):
         numConstraints = constraints.Count
         tmp = 0
-        print "LP constraints: " + 'numConstraints'
+        print "LP constraints: " + `numConstraints`
         varCount = LPSTerm.TotalVarCount()
+
         for ct in constraints:
             self.AddConstraint(ct)
-            tmp += 1
+            tmp+=1
 
         print ""
 
         if objective.HasValue:
-            objid = 0
-            self.solver_.AddRow("Objective", out objid)
-
+            coefficients = zeros(varCount)
             for j in range(varCount):
-                self.solver_.SetCoefficient(objid, vars_[j], objective.Value.term.GetCoefficient(j))
-            if objective.Value.type == LPSObjectiveType.Max:"""Wrong!!!!!!!!!!!!"""
-                self.solver_.AddGoal(objid, 10, False)
-                self.objective_id = objid
-            elif objective.Value.type == LPSObjectiveType.Min:"""Wrong!!!!!!!!!!!!"""
-                self.solver_.AddGoal(objid, 10, True)
-                self.objective_id = objid
-
+                coefficients[j] = objective.Value.term.GetCoefficient(j)
+            self.cvxPara.Setc(coefficients)
 
     def SolveLowLevelLP(self):
-        """// Solve the LP"""
         print "Solving LP ... "
-        pms = GurobiParams()
-        pms.OutputFlag = False
-        pms.TimeLimit = int(RobustnessOptions.LPTimeMilliSeconds)
 
-        """// Try to prevent GC from happening here ...
-        // First do a massive reclaim..."""
-        GC.Collect(2)
-        """// Then save the old GC mode and set the one now to low latency..."""
-        old_gc_mode = System.Runtime.GCSettings.LatencyMode
-        System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.LowLatency
-        answer = self.solver_.Solve(pms)
+        solver = None
+        #solver = 'glpk'
+        c = cvxopt.matrix(self.cvxPara.c)
+        G = cvxopt.matrix(self.cvxPara.G)
+        h = cvxopt.matrix(self.cvxPara.h)
+        if objective.Value.type == LPSObjectiveType.Min:
+            sol = cvxopt.solvers.lp(c, G, h, solver=solver)
+        elif objective.Value.type == LPSObjectiveType.Max:
+            self.cvxPara.reversec()
+            sol = cvxopt.solvers.lp(c, G, h, solver=solver)
 
-        """// Restore GC mode..."""
-        System.Runtime.GCSettings.LatencyMode = old_gc_mode
-        result = answer.LpResult
+        return array(sol['x']).reshape((LPSTerm.TotalVarCount(),)).tolist()
 
-        if result != LinearResult.Optimal:
-            if result != LinearResult.Feasible:
-                print "LP non-feasible"
-                return None
-            else:
-                """// Feasible"""
-                print "LP feasible but non-optimal solution"
-            print "LP optimal solution found"
-        vs = [None] * self.input_dimension_
-        for i in range(self.input_dimension_):
-            vs[i] = float(answer.GetValue(self.vars_[i]))
-        return vs
