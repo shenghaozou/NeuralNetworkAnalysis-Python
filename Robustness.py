@@ -56,24 +56,24 @@ class RobustnessOptions(object):
 
 	def Dump():
 		print "Robustness options:"
-		print "Registry:                    {0}", self._Registry
-		print "DatasetPercentage:           {0}", self._DataSetPercentage
-		print "CEGAR:                       {0}", self._CEGAR
-		print "DoOptimization:              {0}", self._DoOptimization
-		print "Epsilon (bound):             {0}", self._Epsilon
-		print "LabelConfidenceDiff:         {0}", self._LabelConfidenceDiff
-		print "LPTimeMilliSeconds:          {0}", self._LPTimeMilliSeconds
-		print "IgnoreLowConfidence:         {0}", self._IgnoreLowConfidence
-		print "LowConfidenceThreshold:      {0}", self._LowConfidenceThreshold
-		print "CEGARGiveUpIterations:       {0}", self._CEGARGiveUpIterations
-		print "LiveConstraintSamplingRatio: {0}", self._LiveConstraintSamplingRatio
-		print "QuantizationSafety:          {0}", self._QuantizationSafety
-		print "Integrality:                 {0}", self._Integrality
-		print "MinValue:                    {0}", self._MinValue
-		print "MaxValue:                    {0}", self._MaxValue
-		print "ScalePreProcessed:           {0}", self._ScalePreProcessed
-		print "OffsetPreProcessed:          {0}", self._OffsetPreProcessed
-		print "SavePNGCounterexamples:      {0}", self._SavePNGCounterexamples
+		print "Registry:                    {0:d}".format(self._Registry)
+		print "DatasetPercentage:           {0:d}".format(self._DataSetPercentage)
+		print "CEGAR:                       {0:d}".format(self._CEGAR)
+		print "DoOptimization:              {0:d}".format(self._DoOptimization)
+		print "Epsilon (bound):             {0:d}".format(self._Epsilon)
+		print "LabelConfidenceDiff:         {0:d}".format(self._LabelConfidenceDiff)
+		print "LPTimeMilliSeconds:          {0:d}".format(self._LPTimeMilliSeconds)
+		print "IgnoreLowConfidence:         {0:d}".format(self._IgnoreLowConfidence)
+		print "LowConfidenceThreshold:      {0:d}".format(self._LowConfidenceThreshold)
+		print "CEGARGiveUpIterations:       {0:d}".format(self._CEGARGiveUpIterations)
+		print "LiveConstraintSamplingRatio: {0:d}".format(self._LiveConstraintSamplingRatio)
+		print "QuantizationSafety:          {0:d}".format(self._QuantizationSafety)
+		print "Integrality:                 {0:d}".format(self._Integrality)
+		print "MinValue:                    {0:d}".format(self._MinValue)
+		print "MaxValue:                    {0:d}".format(self._MaxValue)
+		print "ScalePreProcessed:           {0:d}".format(self._ScalePreProcessed)
+		print "OffsetPreProcessed:          {0:d}".format(self._OffsetPreProcessed)
+		print "SavePNGCounterexamples:      {0:d}".format(self._SavePNGCounterexamples)
 
 	Dump = staticmethod(Dump)
 
